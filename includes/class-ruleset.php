@@ -145,38 +145,17 @@ class Visigate_Ruleset {
 					return current_user_can( 'edit_posts' );
 				},
 				'args'                => array(
-					'type' => array( 'type' => 'string', 'enum' => array( 'product', 'product_cat' ), 'required' => true ),
-					'q'    => array( 'type' => 'string', 'default' => '' ),
+					'type' => array( 'type' => 'string', 'required' => true, 'sanitize_callback' => 'sanitize_key' ),
+					'q'    => array( 'type' => 'string', 'default' => '', 'sanitize_callback' => 'sanitize_text_field' ),
 				),
 				'callback'            => array( __CLASS__, 'rest_search' ),
 			)
 		);
 	}
 
+	/** Async token-field lookups. Add-ons supply rows via `visigate_rest_search` => [ [id, label], … ]. */
 	public static function rest_search( WP_REST_Request $req ) {
-		$q    = sanitize_text_field( $req['q'] );
-		$rows = array();
-
-		if ( 'product' === $req['type'] ) {
-			$args = array(
-				'post_type' => 'product', 'post_status' => array( 'publish', 'private' ),
-				'posts_per_page' => 20, 'no_found_rows' => true, 's' => $q,
-			);
-			if ( ctype_digit( $q ) ) {
-				$args['p'] = (int) $q;
-				unset( $args['s'] );
-			}
-			foreach ( get_posts( $args ) as $p ) {
-				$rows[] = array( 'id' => $p->ID, 'label' => sprintf( '%s (#%d)', wp_strip_all_tags( $p->post_title ), $p->ID ) );
-			}
-		} else {
-			$terms = get_terms( array( 'taxonomy' => 'product_cat', 'search' => $q, 'number' => 20, 'hide_empty' => false ) );
-			if ( ! is_wp_error( $terms ) ) {
-				foreach ( $terms as $t ) {
-					$rows[] = array( 'id' => $t->term_id, 'label' => sprintf( '%s (#%d)', $t->name, $t->term_id ) );
-				}
-			}
-		}
-		return rest_ensure_response( $rows );
+		$rows = apply_filters( 'visigate_rest_search', array(), $req['type'], $req['q'] );
+		return rest_ensure_response( is_array( $rows ) ? array_slice( $rows, 0, 20 ) : array() );
 	}
 }

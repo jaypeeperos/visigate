@@ -62,7 +62,7 @@
 	}
 
 	function typeOptions() {
-		return Object.keys( TYPES ).map( function ( k ) {
+		var out = Object.keys( TYPES ).map( function ( k ) {
 			var s = TYPES[ k ];
 			var locked = s.pro && ! D.isPro;
 			return {
@@ -71,6 +71,14 @@
 				disabled: locked,
 			};
 		} );
+		( D.teasers || [] ).forEach( function ( t, i ) {
+			out.push( {
+				value: 'teaser:' + i,
+				label: ( D.groups[ t.group ] || '' ) + ' › ' + t.label + ' (' + __( 'Pro', 'visigate' ) + ')',
+				disabled: true,
+			} );
+		} );
+		return out;
 	}
 
 	function opsOptions( s ) {
@@ -270,7 +278,7 @@
 				? el( Text, { label: __( 'Within last N days (0 = any time)', 'visigate' ), showLabel: true, type: 'number', min: 0, value: cond.days || '', onChange: function ( x ) { patch( { days: parseInt( x, 10 ) || 0 } ); } } )
 				: null,
 			s.pro && ! D.isPro
-				? el( 'p', { className: 'vg-pro-note' }, __( 'Pro condition — upgrade to edit.', 'visigate' ) + ' ', el( 'a', { href: D.upgradeUrl, target: '_blank', rel: 'noopener' }, __( 'See plans', 'visigate' ) ) )
+				? el( 'p', { className: 'vg-pro-note' }, __( 'Pro condition — activate your license to edit.', 'visigate' ) + ' ', el( 'a', { href: D.upgradeUrl, target: '_blank', rel: 'noopener' }, __( 'License / plans', 'visigate' ) ) )
 				: null
 		);
 	}

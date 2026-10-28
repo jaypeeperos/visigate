@@ -64,7 +64,7 @@ class Visigate_Admin {
 						<td>
 							<label>
 								<input type="checkbox" name="<?php echo esc_attr( self::OPTION ); ?>[auto_nocache]" value="1" <?php checked( self::opt( 'auto_nocache' ) ); ?>>
-								<?php esc_html_e( 'Automatically exclude a page from page caching when it uses visitor-specific rules (device, country, time, URL, cookie, referrer, cart).', 'visigate' ); ?>
+								<?php esc_html_e( 'Automatically exclude a page from page caching when it uses visitor-specific rules (device, time, and Pro conditions such as country, URL, cookie, referrer, cart).', 'visigate' ); ?>
 							</label>
 							<p class="description"><?php esc_html_e( 'Role, login and purchase-history rules need no exclusion because logged-in users already bypass most page caches.', 'visigate' ); ?></p>
 						</td>
@@ -83,7 +83,7 @@ class Visigate_Admin {
 			</form>
 			<h2><?php esc_html_e( 'Developer reference', 'visigate' ); ?></h2>
 			<p><code>visigate_visible( $set_id_or_rules )</code> — <?php esc_html_e( 'check a rule set in PHP templates.', 'visigate' ); ?></p>
-			<p><code>visigate_country_code</code>, <code>visigate_conditions</code>, <code>visigate_check_condition</code>, <code>visigate_is_pro</code> — <?php esc_html_e( 'filters.', 'visigate' ); ?></p>
+			<p><code>visigate_conditions</code>, <code>visigate_check_condition</code>, <code>visigate_condition_options</code>, <code>visigate_rest_search</code>, <code>visigate_is_pro</code> — <?php esc_html_e( 'filters.', 'visigate' ); ?></p>
 		</div>
 		<?php
 	}
@@ -117,6 +117,7 @@ class Visigate_Admin {
 			'options'    => Visigate_Conditions::options(),
 			'sets'       => Visigate_Ruleset::all_sets(),
 			'isPro'      => visigate_is_pro(),
+			'teasers'    => class_exists( 'Visigate_Pro_Conditions' ) ? array() : Visigate_Conditions::teasers(),
 			'upgradeUrl' => apply_filters( 'visigate_upgrade_url', 'https://example.com/visigate/pricing' ),
 			'newSetUrl'  => admin_url( 'post-new.php?post_type=' . Visigate_Ruleset::CPT ),
 		);
