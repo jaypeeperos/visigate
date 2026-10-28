@@ -1,12 +1,12 @@
 <?php
 /**
  * Plugin Name:       Visigate – Conditional Content & Visibility Rules
- * Plugin URI:        https://example.com/visigate
+ * Plugin URI:        https://github.com/jaypeeperos/visigate
  * Description:       Show or hide any block or page-builder element by role, login status, country, device, time, URL/cookie, or WooCommerce purchase history. Visual rule builder, server-side evaluation, zero front-end JavaScript.
  * Version:           1.1.0
  * Requires at least: 6.2
  * Requires PHP:      7.4
- * Author:            Your Name
+ * Author:            Jaypee Peros
  * License:           GPL-2.0-or-later
  * License URI:       https://www.gnu.org/licenses/gpl-2.0.html
  * Text Domain:       visigate
