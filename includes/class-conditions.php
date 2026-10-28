@@ -68,7 +68,16 @@ class Visigate_Conditions {
 			array( 'label' => __( 'User meta', 'visigate' ), 'group' => 'user' ),
 		);
 		if ( class_exists( 'WooCommerce' ) ) {
-			foreach ( array( 'Purchased product (last N days)', 'Purchased from category', 'Lifetime orders', 'Lifetime spend', 'Cart contents', 'Cart subtotal', 'Active subscription' ) as $l ) {
+			$woo = array(
+				__( 'Purchased product (last N days)', 'visigate' ),
+				__( 'Purchased from category', 'visigate' ),
+				__( 'Lifetime orders', 'visigate' ),
+				__( 'Lifetime spend', 'visigate' ),
+				__( 'Cart contents', 'visigate' ),
+				__( 'Cart subtotal', 'visigate' ),
+				__( 'Active subscription', 'visigate' ),
+			);
+			foreach ( $woo as $l ) {
 				$t[] = array( 'label' => $l, 'group' => 'woo' );
 			}
 		}

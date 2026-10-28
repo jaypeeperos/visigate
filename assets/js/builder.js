@@ -278,7 +278,12 @@
 				? el( Text, { label: __( 'Within last N days (0 = any time)', 'visigate' ), showLabel: true, type: 'number', min: 0, value: cond.days || '', onChange: function ( x ) { patch( { days: parseInt( x, 10 ) || 0 } ); } } )
 				: null,
 			s.pro && ! D.isPro
-				? el( 'p', { className: 'vg-pro-note' }, __( 'Pro condition — activate your license to edit.', 'visigate' ) + ' ', el( 'a', { href: D.upgradeUrl, target: '_blank', rel: 'noopener' }, __( 'License / plans', 'visigate' ) ) )
+				? el( 'p', { className: 'vg-pro-note' },
+					__( 'This condition requires the Visigate Pro add-on.', 'visigate' ),
+					D.upgradeUrl
+						? el( Fragment, null, ' ', el( 'a', { href: D.upgradeUrl, target: '_blank', rel: 'noopener' }, __( 'Learn more', 'visigate' ) ) )
+						: null
+				)
 				: null
 		);
 	}

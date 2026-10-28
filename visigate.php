@@ -2,20 +2,20 @@
 /**
  * Plugin Name:       Visigate – Conditional Content & Visibility Rules
  * Plugin URI:        https://github.com/jaypeeperos/visigate
- * Description:       Show or hide any block or page-builder element by role, login status, country, device, time, URL/cookie, or WooCommerce purchase history. Visual rule builder, server-side evaluation, zero front-end JavaScript.
- * Version:           1.1.0
+ * Description:       Show or hide any block or Elementor element by role, login status, device, or time. Visual rule builder, server-side evaluation, zero front-end JavaScript.
+ * Version:           1.1.1
  * Requires at least: 6.2
  * Requires PHP:      7.4
  * Author:            Jaypee Peros
+ * Author URI:        https://github.com/jaypeeperos
  * License:           GPL-2.0-or-later
  * License URI:       https://www.gnu.org/licenses/gpl-2.0.html
  * Text Domain:       visigate
- * WC requires at least: 7.0
  */
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'VISIGATE_VERSION', '1.1.0' );
+define( 'VISIGATE_VERSION', '1.1.1' );
 define( 'VISIGATE_FILE', __FILE__ );
 define( 'VISIGATE_DIR', plugin_dir_path( __FILE__ ) );
 define( 'VISIGATE_URL', plugin_dir_url( __FILE__ ) );

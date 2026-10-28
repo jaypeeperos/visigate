@@ -118,7 +118,7 @@ class Visigate_Admin {
 			'sets'       => Visigate_Ruleset::all_sets(),
 			'isPro'      => visigate_is_pro(),
 			'teasers'    => class_exists( 'Visigate_Pro_Conditions' ) ? array() : Visigate_Conditions::teasers(),
-			'upgradeUrl' => apply_filters( 'visigate_upgrade_url', 'https://example.com/visigate/pricing' ),
+			'upgradeUrl' => esc_url_raw( (string) apply_filters( 'visigate_upgrade_url', '' ) ),
 			'newSetUrl'  => admin_url( 'post-new.php?post_type=' . Visigate_Ruleset::CPT ),
 		);
 	}
@@ -126,6 +126,7 @@ class Visigate_Admin {
 	private static function enqueue_builder() {
 		wp_enqueue_style( 'visigate-builder', VISIGATE_URL . 'assets/css/builder.css', array( 'wp-components' ), VISIGATE_VERSION );
 		wp_enqueue_script( 'visigate-builder', VISIGATE_URL . 'assets/js/builder.js', array( 'wp-element', 'wp-components', 'wp-i18n', 'wp-api-fetch' ), VISIGATE_VERSION, true );
+		wp_set_script_translations( 'visigate-builder', 'visigate' );
 		wp_add_inline_script( 'visigate-builder', 'window.VisigateData = ' . wp_json_encode( self::js_data() ) . ';', 'before' );
 	}
 
@@ -136,6 +137,7 @@ class Visigate_Admin {
 		}
 		self::enqueue_builder();
 		wp_enqueue_script( 'visigate-admin', VISIGATE_URL . 'assets/js/admin.js', array( 'visigate-builder' ), VISIGATE_VERSION, true );
+		wp_set_script_translations( 'visigate-admin', 'visigate' );
 	}
 
 	public static function enqueue_editor() {
@@ -143,9 +145,10 @@ class Visigate_Admin {
 		wp_enqueue_script(
 			'visigate-editor',
 			VISIGATE_URL . 'assets/js/editor.js',
-			array( 'visigate-builder', 'wp-hooks', 'wp-compose', 'wp-block-editor', 'wp-blocks' ),
+			array( 'visigate-builder', 'wp-hooks', 'wp-compose', 'wp-block-editor', 'wp-blocks', 'wp-i18n' ),
 			VISIGATE_VERSION,
 			true
 		);
+		wp_set_script_translations( 'visigate-editor', 'visigate' );
 	}
 }
