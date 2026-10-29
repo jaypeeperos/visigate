@@ -107,6 +107,8 @@ class Visigate_Admin {
 				'label'       => $c['label'],
 				'group'       => $c['group'],
 				'pro'         => (bool) $c['pro'],
+				'locked'      => (bool) $c['locked'],
+				'lock_label'  => (string) $c['lock_label'],
 				'input'       => $c['input'],
 				'options'     => $c['options'],
 				'source'      => $c['source'],

@@ -4,7 +4,7 @@ Tags: conditional content, visibility, elementor, block editor, personalization
 Requires at least: 6.2
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.2.0
+Stable tag: 1.3.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -58,6 +58,9 @@ No. Elementor support is included when Elementor is active. WooCommerce conditio
 Yes. Visigate Pro is a separate plugin sold outside WordPress.org. The copy hosted here does not require it.
 
 == Changelog ==
+
+= 1.3.0 =
+Fix: elements with a rule set are no longer stored in Elementor's element cache, so every visitor gets the right version. Add-ons can now lock individual conditions to a plan.
 
 = 1.2.0 =
 New `visigate_manage` capability (granted to administrators) and developer hooks for replacement content, renaming and builder extensions.

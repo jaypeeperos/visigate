@@ -26,11 +26,20 @@
 	function firstType() {
 		var keys = Object.keys( TYPES );
 		for ( var i = 0; i < keys.length; i++ ) {
-			if ( ! TYPES[ keys[ i ] ].pro || D.isPro ) {
+			if ( ! isLocked( TYPES[ keys[ i ] ] ) ) {
 				return keys[ i ];
 			}
 		}
 		return keys[ 0 ];
+	}
+
+	/** Locked = needs Pro (not installed/licensed) or a higher plan (`locked` set by an add-on). */
+	function isLocked( s ) {
+		return ( s.pro && ! D.isPro ) || !! s.locked;
+	}
+
+	function lockLabel( s ) {
+		return s.locked && s.lock_label ? s.lock_label : __( 'Pro', 'visigate' );
 	}
 
 	function initialValue( s ) {
@@ -64,10 +73,10 @@
 	function typeOptions() {
 		var out = Object.keys( TYPES ).map( function ( k ) {
 			var s = TYPES[ k ];
-			var locked = s.pro && ! D.isPro;
+			var locked = isLocked( s );
 			return {
 				value: k,
-				label: ( D.groups[ s.group ] || '' ) + ' › ' + s.label + ( locked ? ' (' + __( 'Pro', 'visigate' ) + ')' : '' ),
+				label: ( D.groups[ s.group ] || '' ) + ' › ' + s.label + ( locked ? ' (' + lockLabel( s ) + ')' : '' ),
 				disabled: locked,
 			};
 		} );
@@ -277,9 +286,11 @@
 			s.days
 				? el( Text, { label: __( 'Within last N days (0 = any time)', 'visigate' ), showLabel: true, type: 'number', min: 0, value: cond.days || '', onChange: function ( x ) { patch( { days: parseInt( x, 10 ) || 0 } ); } } )
 				: null,
-			s.pro && ! D.isPro
+			isLocked( s )
 				? el( 'p', { className: 'vg-pro-note' },
-					__( 'This condition requires the Visigate Pro add-on.', 'visigate' ),
+					s.locked && s.lock_label
+						? __( 'Editing this condition requires the ', 'visigate' ) + s.lock_label + __( ' plan. It keeps working on your site.', 'visigate' )
+						: __( 'This condition requires the Visigate Pro add-on.', 'visigate' ),
 					D.upgradeUrl
 						? el( Fragment, null, ' ', el( 'a', { href: D.upgradeUrl, target: '_blank', rel: 'noopener' }, __( 'Learn more', 'visigate' ) ) )
 						: null

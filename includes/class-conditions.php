@@ -76,6 +76,10 @@ class Visigate_Conditions {
 				__( 'Cart contents', 'visigate' ),
 				__( 'Cart subtotal', 'visigate' ),
 				__( 'Active subscription', 'visigate' ),
+				__( 'Coupon used', 'visigate' ),
+				__( 'Shipping country', 'visigate' ),
+				__( 'Has left a review', 'visigate' ),
+				__( 'Days since last order', 'visigate' ),
 			);
 			foreach ( $woo as $l ) {
 				$t[] = array( 'label' => $l, 'group' => 'woo' );
@@ -141,6 +145,7 @@ class Visigate_Conditions {
 				array(
 					'label' => $key, 'group' => 'user', 'input' => 'none', 'pro' => false, 'dynamic' => false,
 					'days'  => false, 'options' => '', 'source' => '', 'no_value' => array(), 'ops' => array( 'is' => '' ),
+					'locked' => false, 'lock_label' => '',
 				)
 			);
 			$d['default_op'] = key( $d['ops'] );

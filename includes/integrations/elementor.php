@@ -95,6 +95,17 @@ $visigate_elementor_filter = function ( $should_render, $element ) {
 	return Visigate_Engine::set_visible( $set );
 };
 
+// Elementor's element cache stores the HTML of "static" elements and reuses it for every visitor.
+// Elements with a rule set must be rendered fresh per visitor, so flag them as dynamic.
+add_filter(
+	'elementor/element/is_dynamic_content',
+	function ( $is_dynamic, $raw_data ) {
+		return $is_dynamic || ! empty( $raw_data['settings']['visigate_set'] );
+	},
+	10,
+	2
+);
+
 foreach ( array( 'widget', 'section', 'column', 'container' ) as $visigate_el_type ) {
 	add_filter( "elementor/frontend/{$visigate_el_type}/should_render", $visigate_elementor_filter, 10, 2 );
 }
