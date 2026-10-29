@@ -127,7 +127,7 @@ class Visigate_Admin {
 			'sets'       => Visigate_Ruleset::all_sets(),
 			'isPro'      => visigate_is_pro(),
 			'teasers'    => class_exists( 'Visigate_Pro_Conditions' ) ? array() : Visigate_Conditions::teasers(),
-			'upgradeUrl' => esc_url_raw( (string) apply_filters( 'visigate_upgrade_url', '' ) ),
+			'upgradeUrl' => esc_url_raw( (string) apply_filters( 'visigate_upgrade_url', 'https://persjay.com/plugins/visigate/#pricing' ) ),
 			'newSetUrl'  => admin_url( 'post-new.php?post_type=' . Visigate_Ruleset::CPT ),
 			'canManage'  => current_user_can( visigate_capability() ),
 			'brand'      => visigate_brand(),
