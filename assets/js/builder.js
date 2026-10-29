@@ -342,6 +342,8 @@
 					emit( r );
 				},
 			} ),
+			// Extension point: add-ons can add controls (e.g. presets) under the action selector.
+			wp.hooks ? wp.hooks.applyFilters( 'visigate.builder.extras', [], { rules: rules, onChange: emit, clone: clone } ) : null,
 			rules.groups.map( function ( g, gi ) {
 				return el( Fragment, { key: gi },
 					gi > 0 ? el( 'div', { className: 'vg-or' }, __( 'OR', 'visigate' ) ) : null,

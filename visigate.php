@@ -3,7 +3,7 @@
  * Plugin Name:       Visigate – Conditional Content & Visibility Rules
  * Plugin URI:        https://github.com/jaypeeperos/visigate
  * Description:       Show or hide any block or Elementor element by role, login status, device, or time. Visual rule builder, server-side evaluation, zero front-end JavaScript.
- * Version:           1.1.1
+ * Version:           1.2.0
  * Requires at least: 6.2
  * Requires PHP:      7.4
  * Author:            Jaypee Peros
@@ -15,7 +15,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'VISIGATE_VERSION', '1.1.1' );
+define( 'VISIGATE_VERSION', '1.2.0' );
 define( 'VISIGATE_FILE', __FILE__ );
 define( 'VISIGATE_DIR', plugin_dir_path( __FILE__ ) );
 define( 'VISIGATE_URL', plugin_dir_url( __FILE__ ) );
@@ -27,6 +27,39 @@ define( 'VISIGATE_URL', plugin_dir_url( __FILE__ ) );
 function visigate_is_pro() {
 	return (bool) apply_filters( 'visigate_is_pro', false );
 }
+
+/**
+ * Display name used in admin menus and labels. Add-ons can rebrand it with the `visigate_brand_name` filter.
+ */
+function visigate_brand() {
+	$name = trim( (string) apply_filters( 'visigate_brand_name', 'Visigate' ) );
+	return '' !== $name ? $name : 'Visigate';
+}
+
+/**
+ * Capability checked by every Visigate screen and save handler.
+ *
+ * It is granted on the fly (nothing is stored in the database) to users who have the base capability
+ * (`manage_options`, filterable with `visigate_base_capability`), unless the `visigate_user_can_manage`
+ * filter returns false for that user.
+ */
+function visigate_capability() {
+	return 'visigate_manage';
+}
+
+add_filter(
+	'user_has_cap',
+	function ( $allcaps, $caps, $args, $user ) {
+		if ( ! in_array( 'visigate_manage', (array) $caps, true ) ) {
+			return $allcaps;
+		}
+		$base                       = (string) apply_filters( 'visigate_base_capability', 'manage_options' );
+		$allcaps['visigate_manage'] = ! empty( $allcaps[ $base ] ) && (bool) apply_filters( 'visigate_user_can_manage', true, $user );
+		return $allcaps;
+	},
+	10,
+	4
+);
 
 /**
  * Template helper. Pass a rule-set ID or a rules array.

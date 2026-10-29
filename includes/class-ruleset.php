@@ -19,14 +19,14 @@ class Visigate_Ruleset {
 	}
 
 	public static function register_cpt() {
-		$cap = 'manage_options';
+		$cap = visigate_capability();
 		register_post_type(
 			self::CPT,
 			array(
 				'labels'              => array(
 					'name'          => __( 'Rule Sets', 'visigate' ),
 					'singular_name' => __( 'Rule Set', 'visigate' ),
-					'menu_name'     => __( 'Visigate', 'visigate' ),
+					'menu_name'     => visigate_brand(),
 					'add_new'       => __( 'Add Rule Set', 'visigate' ),
 					'add_new_item'  => __( 'Add New Rule Set', 'visigate' ),
 					'edit_item'     => __( 'Edit Rule Set', 'visigate' ),
@@ -90,7 +90,7 @@ class Visigate_Ruleset {
 		if ( ! isset( $_POST['visigate_nonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['visigate_nonce'] ) ), 'visigate_save_set' ) ) {
 			return;
 		}
-		if ( ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) || ! current_user_can( 'manage_options' ) ) {
+		if ( ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) || ! current_user_can( visigate_capability() ) ) {
 			return;
 		}
 		$raw   = isset( $_POST['visigate_rules_json'] ) ? json_decode( wp_unslash( $_POST['visigate_rules_json'] ), true ) : array(); // phpcs:ignore
@@ -142,7 +142,7 @@ class Visigate_Ruleset {
 			array(
 				'methods'             => 'GET',
 				'permission_callback' => function () {
-					return current_user_can( 'edit_posts' );
+					return current_user_can( visigate_capability() );
 				},
 				'args'                => array(
 					'type' => array( 'type' => 'string', 'required' => true, 'sanitize_callback' => 'sanitize_key' ),

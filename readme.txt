@@ -4,7 +4,7 @@ Tags: conditional content, visibility, elementor, block editor, personalization
 Requires at least: 6.2
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.1.1
+Stable tag: 1.2.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -43,7 +43,9 @@ A separate add-on, Visigate Pro, can add extra conditions (country, URL, cookie,
 
 `visigate_visible( $set_id_or_rules )`
 
-Filters: `visigate_conditions`, `visigate_check_condition`, `visigate_condition_options`, `visigate_rest_search`, `visigate_device`, `visigate_missing_set_visible`, `visigate_is_pro`, `visigate_upgrade_url`.
+Filters: `visigate_conditions`, `visigate_check_condition`, `visigate_condition_options`, `visigate_rest_search`, `visigate_device`, `visigate_missing_set_visible`, `visigate_is_pro`, `visigate_upgrade_url`, `visigate_hidden_block_output`, `visigate_hidden_shortcode_output`, `visigate_brand_name`, `visigate_base_capability`, `visigate_user_can_manage`, `visigate_js_data`.
+
+JavaScript filters: `visigate.builder.extras`, `visigate.panel.extras`.
 
 == Frequently Asked Questions ==
 
@@ -56,6 +58,9 @@ No. Elementor support is included when Elementor is active. WooCommerce conditio
 Yes. Visigate Pro is a separate plugin sold outside WordPress.org. The copy hosted here does not require it.
 
 == Changelog ==
+
+= 1.2.0 =
+New `visigate_manage` capability (granted to administrators) and developer hooks for replacement content, renaming and builder extensions.
 
 = 1.1.1 =
 Directory-ready readme and plugin headers (free features only). Upgrade URL is empty until a real pricing page exists.

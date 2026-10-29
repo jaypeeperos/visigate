@@ -20,6 +20,31 @@ add_action(
 			return;
 		}
 
+		$brand = visigate_brand();
+
+		// Users who may not manage Visigate (e.g. clients, when an add-on restricts access) get a read-only note.
+		// The rule-set value is kept in a hidden control so saving the page never removes it.
+		if ( ! current_user_can( visigate_capability() ) ) {
+			$element->start_controls_section(
+				'visigate_section',
+				array(
+					/* translators: %s: plugin name */
+					'label' => sprintf( __( '%s: Visibility', 'visigate' ), $brand ),
+					'tab'   => \Elementor\Controls_Manager::TAB_ADVANCED,
+				)
+			);
+			$element->add_control( 'visigate_set', array( 'type' => \Elementor\Controls_Manager::HIDDEN, 'default' => '' ) );
+			$element->add_control(
+				'visigate_locked_note',
+				array(
+					'type' => \Elementor\Controls_Manager::RAW_HTML,
+					'raw'  => esc_html__( 'Visibility rules on this site are managed by your administrator.', 'visigate' ),
+				)
+			);
+			$element->end_controls_section();
+			return;
+		}
+
 		$options = array( '' => __( '— Always visible —', 'visigate' ) );
 		foreach ( Visigate_Ruleset::all_sets() as $set ) {
 			$options[ $set['id'] ] = $set['title'];
@@ -28,7 +53,8 @@ add_action(
 		$element->start_controls_section(
 			'visigate_section',
 			array(
-				'label' => __( 'Visigate: Visibility', 'visigate' ),
+				/* translators: %s: plugin name */
+				'label' => sprintf( __( '%s: Visibility', 'visigate' ), $brand ),
 				'tab'   => \Elementor\Controls_Manager::TAB_ADVANCED,
 			)
 		);
@@ -42,7 +68,7 @@ add_action(
 				'description' => sprintf(
 					/* translators: %s: link */
 					__( 'Create or edit rule sets under %s.', 'visigate' ),
-					'<a href="' . esc_url( admin_url( 'edit.php?post_type=' . Visigate_Ruleset::CPT ) ) . '" target="_blank">Visigate → Rule Sets</a>'
+					'<a href="' . esc_url( admin_url( 'edit.php?post_type=' . Visigate_Ruleset::CPT ) ) . '" target="_blank">' . esc_html( $brand ) . ' → Rule Sets</a>'
 				),
 			)
 		);

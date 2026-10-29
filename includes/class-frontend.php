@@ -41,7 +41,7 @@ class Visigate_Frontend {
 
 	public static function preview_enabled() {
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-		return Visigate_Admin::opt( 'admin_preview' ) && isset( $_GET['visigate_preview'] ) && current_user_can( 'manage_options' );
+		return Visigate_Admin::opt( 'admin_preview' ) && isset( $_GET['visigate_preview'] ) && current_user_can( visigate_capability() );
 	}
 
 	private static function block_visible( $block ) {
@@ -59,7 +59,27 @@ class Visigate_Frontend {
 		if ( null !== $pre || ! self::has_rules( $block ) || self::in_editor_context() || self::preview_enabled() ) {
 			return $pre;
 		}
-		return self::block_visible( $block ) ? $pre : '';
+		return self::block_visible( $block ) ? $pre : self::hidden_block_output( $block );
+	}
+
+	/**
+	 * What a hidden block renders as. Empty by default; add-ons can return replacement ("fallback") HTML.
+	 *
+	 * @param array $block Parsed block.
+	 */
+	private static function hidden_block_output( $block ) {
+		$out = apply_filters( 'visigate_hidden_block_output', '', $block );
+		return is_string( $out ) ? $out : '';
+	}
+
+	/**
+	 * What a hidden [visigate] shortcode renders as. Empty by default.
+	 *
+	 * @param array $atts Raw shortcode attributes (including any unknown ones, e.g. from add-ons).
+	 */
+	private static function hidden_shortcode_output( $atts ) {
+		$out = apply_filters( 'visigate_hidden_shortcode_output', '', (array) $atts );
+		return is_string( $out ) ? $out : '';
 	}
 
 	public static function render_block( $content, $block ) {
@@ -73,7 +93,7 @@ class Visigate_Frontend {
 			}
 			return '<div class="visigate-preview-hidden" title="' . esc_attr__( 'Hidden from this visitor by Visigate', 'visigate' ) . '" style="outline:2px dashed #d63638;outline-offset:2px;opacity:.5">' . $content . '</div>';
 		}
-		return $visible ? $content : '';
+		return $visible ? $content : self::hidden_block_output( $block );
 	}
 
 	/** [visigate set="12" logged_in="yes" roles="customer,subscriber" device="mobile" bought="45,46" bought_days="30" hide="no"]…[/visigate] */
@@ -85,7 +105,7 @@ class Visigate_Frontend {
 		);
 
 		if ( '' !== $a['set'] && ! Visigate_Engine::set_visible( (int) $a['set'] ) ) {
-			return '';
+			return self::hidden_shortcode_output( $atts );
 		}
 
 		$csv   = function ( $s ) {
@@ -107,7 +127,7 @@ class Visigate_Frontend {
 		if ( $conds ) {
 			$rules = array( 'action' => 'yes' === $a['hide'] ? 'hide' : 'show', 'groups' => array( array( 'conditions' => $conds ) ) );
 			if ( ! Visigate_Engine::visible( $rules ) ) {
-				return '';
+				return self::hidden_shortcode_output( $atts );
 			}
 		}
 		return do_shortcode( $content );
@@ -115,14 +135,15 @@ class Visigate_Frontend {
 
 	/** Admin-bar toggle: preview what is being hidden on the current page. */
 	public static function admin_bar( $bar ) {
-		if ( is_admin() || ! current_user_can( 'manage_options' ) || ! Visigate_Admin::opt( 'admin_preview' ) ) {
+		if ( is_admin() || ! current_user_can( visigate_capability() ) || ! Visigate_Admin::opt( 'admin_preview' ) ) {
 			return;
 		}
 		$on = self::preview_enabled();
 		$bar->add_node(
 			array(
 				'id'    => 'visigate-preview',
-				'title' => $on ? __( 'Visigate: hide hidden content', 'visigate' ) : __( 'Visigate: reveal hidden content', 'visigate' ),
+				/* translators: %s: plugin name */
+				'title' => sprintf( $on ? __( '%s: hide hidden content', 'visigate' ) : __( '%s: reveal hidden content', 'visigate' ), visigate_brand() ),
 				'href'  => $on ? remove_query_arg( 'visigate_preview' ) : add_query_arg( 'visigate_preview', '1' ),
 			)
 		);

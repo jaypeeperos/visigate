@@ -14,6 +14,12 @@ class Visigate_Admin {
 		add_action( 'admin_init', array( __CLASS__, 'register_settings' ) );
 		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'enqueue_admin' ) );
 		add_action( 'enqueue_block_editor_assets', array( __CLASS__, 'enqueue_editor' ) );
+		add_filter(
+			'option_page_capability_visigate',
+			function () {
+				return visigate_capability();
+			}
+		);
 	}
 
 	public static function opt( $key ) {
@@ -28,9 +34,10 @@ class Visigate_Admin {
 	public static function menu() {
 		add_submenu_page(
 			'edit.php?post_type=' . Visigate_Ruleset::CPT,
-			__( 'Visigate Settings', 'visigate' ),
+			/* translators: %s: plugin name */
+			sprintf( __( '%s Settings', 'visigate' ), visigate_brand() ),
 			__( 'Settings', 'visigate' ),
-			'manage_options',
+			visigate_capability(),
 			'visigate-settings',
 			array( __CLASS__, 'render_settings' )
 		);
@@ -55,7 +62,7 @@ class Visigate_Admin {
 	public static function render_settings() {
 		?>
 		<div class="wrap">
-			<h1><?php esc_html_e( 'Visigate Settings', 'visigate' ); ?></h1>
+			<h1><?php /* translators: %s: plugin name */ echo esc_html( sprintf( __( '%s Settings', 'visigate' ), visigate_brand() ) ); ?></h1>
 			<form method="post" action="options.php">
 				<?php settings_fields( 'visigate' ); ?>
 				<table class="form-table" role="presentation">
@@ -83,7 +90,7 @@ class Visigate_Admin {
 			</form>
 			<h2><?php esc_html_e( 'Developer reference', 'visigate' ); ?></h2>
 			<p><code>visigate_visible( $set_id_or_rules )</code> — <?php esc_html_e( 'check a rule set in PHP templates.', 'visigate' ); ?></p>
-			<p><code>visigate_conditions</code>, <code>visigate_check_condition</code>, <code>visigate_condition_options</code>, <code>visigate_rest_search</code>, <code>visigate_is_pro</code> — <?php esc_html_e( 'filters.', 'visigate' ); ?></p>
+			<p><code>visigate_conditions</code>, <code>visigate_check_condition</code>, <code>visigate_condition_options</code>, <code>visigate_rest_search</code>, <code>visigate_is_pro</code>, <code>visigate_hidden_block_output</code>, <code>visigate_hidden_shortcode_output</code>, <code>visigate_brand_name</code>, <code>visigate_user_can_manage</code>, <code>visigate_js_data</code> — <?php esc_html_e( 'filters.', 'visigate' ); ?></p>
 		</div>
 		<?php
 	}
@@ -111,7 +118,7 @@ class Visigate_Admin {
 				'placeholder' => $c['placeholder'] ?? '',
 			);
 		}
-		return array(
+		$data = array(
 			'conditions' => $conds,
 			'groups'     => Visigate_Conditions::groups(),
 			'options'    => Visigate_Conditions::options(),
@@ -120,12 +127,15 @@ class Visigate_Admin {
 			'teasers'    => class_exists( 'Visigate_Pro_Conditions' ) ? array() : Visigate_Conditions::teasers(),
 			'upgradeUrl' => esc_url_raw( (string) apply_filters( 'visigate_upgrade_url', '' ) ),
 			'newSetUrl'  => admin_url( 'post-new.php?post_type=' . Visigate_Ruleset::CPT ),
+			'canManage'  => current_user_can( visigate_capability() ),
+			'brand'      => visigate_brand(),
 		);
+		return apply_filters( 'visigate_js_data', $data );
 	}
 
 	private static function enqueue_builder() {
 		wp_enqueue_style( 'visigate-builder', VISIGATE_URL . 'assets/css/builder.css', array( 'wp-components' ), VISIGATE_VERSION );
-		wp_enqueue_script( 'visigate-builder', VISIGATE_URL . 'assets/js/builder.js', array( 'wp-element', 'wp-components', 'wp-i18n', 'wp-api-fetch' ), VISIGATE_VERSION, true );
+		wp_enqueue_script( 'visigate-builder', VISIGATE_URL . 'assets/js/builder.js', array( 'wp-element', 'wp-components', 'wp-i18n', 'wp-api-fetch', 'wp-hooks' ), VISIGATE_VERSION, true );
 		wp_set_script_translations( 'visigate-builder', 'visigate' );
 		wp_add_inline_script( 'visigate-builder', 'window.VisigateData = ' . wp_json_encode( self::js_data() ) . ';', 'before' );
 	}

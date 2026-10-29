@@ -34,6 +34,8 @@
 		var setOptions = [ { value: '0', label: __( '— None —', 'visigate' ) } ].concat(
 			( D.sets || [] ).map( function ( s ) { return { value: String( s.id ), label: s.title }; } )
 		);
+		// Extension point: add-ons can append controls (e.g. fallback content) to the panel.
+		var extras = wp.hooks.applyFilters( 'visigate.panel.extras', [], props );
 		return el( comp.PanelBody, { title: __( 'Visibility Rules', 'visigate' ), initialOpen: hasRules( a ), icon: 'visibility' },
 			el( comp.SelectControl, {
 				label: __( 'Saved rule set', 'visigate' ),
@@ -50,8 +52,15 @@
 				onChange: function ( v ) {
 					props.setAttributes( { visigateRules: v && v.groups && v.groups.length ? v : undefined } );
 				},
-			} )
+			} ),
+			extras
 		);
+	}
+
+	// Users who may not manage Visigate keep the attributes above (so saving never strips rules)
+	// but get no panel and no canvas indicator.
+	if ( D.canManage === false ) {
+		return;
 	}
 
 	addFilter( 'editor.BlockEdit', 'visigate/panel', createHOC( function ( BlockEdit ) {
