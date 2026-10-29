@@ -82,16 +82,36 @@ class Visigate_Frontend {
 		return is_string( $out ) ? $out : '';
 	}
 
+	/**
+	 * Admin preview: show hidden content faded and outlined in red instead of removing it.
+	 *
+	 * @param string $html Content that is hidden from the current visitor.
+	 */
+	private static function preview_wrap( $html ) {
+		return '<div class="visigate-preview-hidden" title="' . esc_attr__( 'Hidden from this visitor by Visigate', 'visigate' ) . '" style="outline:2px dashed #d63638;outline-offset:2px;opacity:.5">' . $html . '</div>';
+	}
+
+	/**
+	 * Output for a [visigate] shortcode whose content is hidden: the fallback, or the
+	 * revealed content while an administrator is using admin preview.
+	 *
+	 * @param array  $atts    Raw shortcode attributes.
+	 * @param string $content Shortcode content.
+	 */
+	private static function hidden_shortcode( $atts, $content ) {
+		if ( self::preview_enabled() ) {
+			return self::preview_wrap( do_shortcode( (string) $content ) );
+		}
+		return self::hidden_shortcode_output( $atts );
+	}
+
 	public static function render_block( $content, $block ) {
 		if ( ! self::has_rules( $block ) || self::in_editor_context() ) {
 			return $content;
 		}
 		$visible = self::block_visible( $block );
 		if ( self::preview_enabled() ) {
-			if ( $visible ) {
-				return $content;
-			}
-			return '<div class="visigate-preview-hidden" title="' . esc_attr__( 'Hidden from this visitor by Visigate', 'visigate' ) . '" style="outline:2px dashed #d63638;outline-offset:2px;opacity:.5">' . $content . '</div>';
+			return $visible ? $content : self::preview_wrap( $content );
 		}
 		return $visible ? $content : self::hidden_block_output( $block );
 	}
@@ -105,7 +125,7 @@ class Visigate_Frontend {
 		);
 
 		if ( '' !== $a['set'] && ! Visigate_Engine::set_visible( (int) $a['set'] ) ) {
-			return self::hidden_shortcode_output( $atts );
+			return self::hidden_shortcode( $atts, $content );
 		}
 
 		$csv   = function ( $s ) {
@@ -127,7 +147,7 @@ class Visigate_Frontend {
 		if ( $conds ) {
 			$rules = array( 'action' => 'yes' === $a['hide'] ? 'hide' : 'show', 'groups' => array( array( 'conditions' => $conds ) ) );
 			if ( ! Visigate_Engine::visible( $rules ) ) {
-				return self::hidden_shortcode_output( $atts );
+				return self::hidden_shortcode( $atts, $content );
 			}
 		}
 		return do_shortcode( $content );
