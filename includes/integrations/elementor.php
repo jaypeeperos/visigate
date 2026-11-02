@@ -12,8 +12,10 @@ defined( 'ABSPATH' ) || exit;
 
 add_action(
 	'elementor/element/after_section_end',
-	function ( $element, $section_id ) {
-		if ( ! in_array( $section_id, array( '_section_style', 'section_advanced' ), true ) ) {
+	function ( $element, $section_id, $args ) {
+		// Containers and third-party widgets use different section IDs. Register
+		// after the first Advanced section instead of depending on its name.
+		if ( ! isset( $args['tab'] ) || \Elementor\Controls_Manager::TAB_ADVANCED !== $args['tab'] ) {
 			return;
 		}
 		if ( $element->get_controls( 'visigate_set' ) ) {
@@ -75,7 +77,7 @@ add_action(
 		$element->end_controls_section();
 	},
 	10,
-	2
+	3
 );
 
 $visigate_elementor_filter = function ( $should_render, $element ) {
