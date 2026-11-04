@@ -101,6 +101,11 @@ class Visigate_Engine {
 				$hit = (bool) array_intersect( (array) wp_get_current_user()->roles, array_map( 'strval', (array) $v ) );
 				return ( 'is_any' === $op ) ? $hit : ! $hit;
 
+			case 'specific_user':
+				$user_id = get_current_user_id();
+				$hit     = $user_id > 0 && in_array( (string) $user_id, array_map( 'strval', (array) $v ), true );
+				return ( 'is_any' === $op ) ? $hit : ! $hit;
+
 			case 'capability':
 				$has = is_user_logged_in() && current_user_can( sanitize_key( (string) $v ) );
 				return ( 'has' === $op ) ? $has : ! $has;
@@ -115,6 +120,17 @@ class Visigate_Engine {
 			case 'device':
 				$hit = in_array( self::device(), (array) $v, true );
 				return ( 'is_any' === $op ) ? $hit : ! $hit;
+
+			case 'post_type':
+				if ( ! is_singular() && ! is_post_type_archive() ) {
+					return false;
+				}
+				$post_types = (array) $v;
+				$hit        = $post_types && ( is_singular( $post_types ) || is_post_type_archive( $post_types ) );
+				return ( 'is_any' === $op ) ? $hit : ! $hit;
+
+			case 'page_view':
+				return ( 'singular' === $op && is_singular() ) || ( 'archive' === $op && is_archive() );
 
 			case 'weekday':
 				$hit = in_array( current_datetime()->format( 'N' ), array_map( 'strval', (array) $v ), true );

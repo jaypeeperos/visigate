@@ -71,7 +71,7 @@ class Visigate_Admin {
 						<td>
 							<label>
 								<input type="checkbox" name="<?php echo esc_attr( self::OPTION ); ?>[auto_nocache]" value="1" <?php checked( self::opt( 'auto_nocache' ) ); ?>>
-								<?php esc_html_e( 'Automatically exclude a page from page caching when it uses visitor-specific rules (device, time, and Pro conditions such as country, URL, cookie, referrer, cart).', 'visigate' ); ?>
+								<?php esc_html_e( 'Automatically exclude a page from page caching when it uses specific user, device, time, or visitor-specific Pro rules such as country or cart.', 'visigate' ); ?>
 							</label>
 							<p class="description"><?php esc_html_e( 'Role, login and purchase-history rules need no exclusion because logged-in users already bypass most page caches.', 'visigate' ); ?></p>
 						</td>

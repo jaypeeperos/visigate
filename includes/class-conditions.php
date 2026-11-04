@@ -25,10 +25,11 @@ class Visigate_Conditions {
 
 	public static function groups() {
 		return array(
-			'user'    => __( 'User', 'visigate' ),
-			'visitor' => __( 'Visitor', 'visigate' ),
-			'time'    => __( 'Time', 'visigate' ),
-			'woo'     => __( 'WooCommerce', 'visigate' ),
+			'user'     => __( 'User', 'visigate' ),
+			'visitor'  => __( 'Visitor', 'visigate' ),
+			'location' => __( 'Page location', 'visigate' ),
+			'time'     => __( 'Time', 'visigate' ),
+			'woo'      => __( 'WooCommerce', 'visigate' ),
 		);
 	}
 
@@ -38,9 +39,16 @@ class Visigate_Conditions {
 		foreach ( wp_roles()->roles as $key => $role ) {
 			$roles[ $key ] = translate_user_role( $role['name'] );
 		}
+		$post_types = array();
+		foreach ( get_post_types( array(), 'objects' ) as $type ) {
+			if ( is_post_type_viewable( $type ) ) {
+				$post_types[ $type->name ] = $type->labels->name;
+			}
+		}
 
 		return apply_filters( 'visigate_condition_options', array(
 			'roles'    => $roles,
+			'post_types' => $post_types,
 			'devices'  => array(
 				'desktop' => __( 'Desktop', 'visigate' ),
 				'tablet'  => __( 'Tablet', 'visigate' ),
@@ -107,6 +115,9 @@ class Visigate_Conditions {
 			'user_role'        => array(
 				'label' => __( 'User role', 'visigate' ), 'group' => 'user', 'input' => 'tokens', 'options' => 'roles', 'ops' => $in,
 			),
+			'specific_user'    => array(
+				'label' => __( 'Specific users', 'visigate' ), 'group' => 'user', 'input' => 'async', 'source' => 'users', 'ops' => $in, 'dynamic' => true,
+			),
 			'capability'       => array(
 				'label' => __( 'User capability', 'visigate' ), 'group' => 'user', 'input' => 'text',
 				'ops'   => array( 'has' => __( 'has', 'visigate' ), 'has_not' => __( 'does not have', 'visigate' ) ),
@@ -120,6 +131,15 @@ class Visigate_Conditions {
 			// ---- Visitor ----------------------------------------------------
 			'device'           => array(
 				'label' => __( 'Device type', 'visigate' ), 'group' => 'visitor', 'input' => 'tokens', 'options' => 'devices', 'ops' => $in, 'dynamic' => true,
+			),
+
+			// ---- Page location ----------------------------------------------
+			'post_type'        => array(
+				'label' => __( 'Post type', 'visigate' ), 'group' => 'location', 'input' => 'tokens', 'options' => 'post_types', 'ops' => $in,
+			),
+			'page_view'        => array(
+				'label' => __( 'Page view', 'visigate' ), 'group' => 'location', 'input' => 'none',
+				'ops'   => array( 'singular' => __( 'Singular', 'visigate' ), 'archive' => __( 'Archive', 'visigate' ) ),
 			),
 
 			// ---- Time -------------------------------------------------------
@@ -257,6 +277,12 @@ class Visigate_Conditions {
 		switch ( $s['input'] ) {
 			case 'tokens':
 				$v = array_values( array_unique( array_map( 'sanitize_text_field', (array) $v ) ) );
+				// Keep saved post type slugs even if their registering plugin is temporarily inactive.
+				if ( 'post_types' === $s['options'] ) {
+					return array_values( array_filter( $v, function ( $slug ) {
+						return (bool) preg_match( '/^[a-z0-9_-]{1,20}$/D', $slug );
+					} ) );
+				}
 				if ( $s['options'] && isset( $opts[ $s['options'] ] ) ) {
 					$v = array_values( array_intersect( $v, array_map( 'strval', array_keys( $opts[ $s['options'] ] ) ) ) );
 				}

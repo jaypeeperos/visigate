@@ -4,7 +4,7 @@ Tags: conditional content, visibility, elementor, block editor, personalization
 Requires at least: 6.2
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.3.2
+Stable tag: 1.3.3
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -35,13 +35,18 @@ https://www.youtube.com/watch?v=SIE5wlU_Eg0
 * **Elementor support:** apply a saved rule set to widgets, sections, columns and containers from the Advanced tab.
 * **Shortcode and PHP helper:** use rules with other page builders, in classic content, or in theme templates.
 * **Admin preview:** reveal hidden content on the live page, faded and outlined in red, to check your rules.
-* **Cache safety:** pages using device or time rules can be flagged automatically so page cache plugins skip them.
+* **Cache safety:** pages using specific user, device, or time rules can be flagged automatically so page cache plugins skip them.
 
 = Included conditions =
 
-* **User:** login status, user role, user capability, account age
+* **User:** login status, user role, specific users, user capability, account age
 * **Visitor:** device type (desktop, tablet, mobile)
+* **Page location:** post type and page view (singular or archive)
 * **Time:** day of week, time of day, date range
+
+= Documentation =
+
+For step-by-step guides with screenshots, see the [Visigate documentation](https://persjay.com/docs/visigate/). It covers rule sets, every condition, the block editor, Elementor, shortcodes, caching and troubleshooting.
 
 = Shortcode =
 
@@ -104,7 +109,7 @@ Visigate loads no CSS or JavaScript on the front end. Rules are checked on the s
 
 = Does it work with caching? =
 
-For device and time rules, Visigate can flag the page with `DONOTCACHEPAGE`, which is on by default and can be changed under Visigate settings. Most page cache plugins respect this flag, but some server or CDN caches may not, so you may need to exclude those pages there. Login and role rules usually need no exclusion, because most page caches are bypassed for logged-in users.
+For specific user, device, and time rules, Visigate can flag the page with `DONOTCACHEPAGE`, which is on by default and can be changed under Visigate settings. Most page cache plugins respect this flag, but some server or CDN caches may not, so you may need to exclude those pages there. Login and role rules usually need no exclusion, because most page caches are bypassed for logged-in users.
 
 = Which time zone do time rules use? =
 
@@ -113,6 +118,14 @@ Day, time and date rules use the time zone set under Settings → General.
 = How is the device detected? =
 
 Visigate uses the browser's user agent on the server, so it detects the device type rather than the screen width. Developers can adjust the result with the `visigate_device` filter.
+
+= How do I target individual users? =
+
+Add **Specific users** and search by display name or username. **Is any of** matches the selected accounts. **Is none of** also matches logged-out visitors. Add a **Logged in** condition in the same group to limit it to signed-in accounts.
+
+= What do the page location rules match? =
+
+**Post type** checks the current page's single item or dedicated post type archive. It supports public-facing custom post types. **Page view** matches either a single item or a WordPress archive, including category, tag, author, and date archives. Search results and the blog posts index are separate views. These rules check the page being visited, regardless of which item a Query Loop block is displaying.
 
 = How can I test a rule? =
 
@@ -137,6 +150,10 @@ Yes. Visigate Pro is a separate plugin sold outside WordPress.org. This plugin d
 
 == Changelog ==
 
+= 1.3.3 =
+* Added Specific users rules for including or excluding selected WordPress accounts.
+* Added Post type and Page view rules for targeting singular pages and archives.
+
 = 1.3.2 =
 * Fix: the Visigate visibility panel now appears on Elementor Flexbox and Grid containers.
 * Improve: register visibility controls by the Advanced tab instead of specific section names, supporting widgets that use different Advanced section IDs.
@@ -160,6 +177,9 @@ Pro conditions moved to the separate Visigate Pro add-on; unknown conditions now
 Initial release.
 
 == Upgrade Notice ==
+
+= 1.3.3 =
+Adds server-side visibility rules for specific users, post types, and singular or archive views.
 
 = 1.3.2 =
 Fixes missing Elementor visibility controls on containers and widgets with different Advanced section names. Existing rule selections are preserved.

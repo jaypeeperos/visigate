@@ -153,9 +153,29 @@ class Visigate_Ruleset {
 		);
 	}
 
-	/** Async token-field lookups. Add-ons supply rows via `visigate_rest_search` => [ [id, label], … ]. */
+	/** Async token-field lookups. Add-ons can provide results via `visigate_rest_search`. */
 	public static function rest_search( WP_REST_Request $req ) {
-		$rows = apply_filters( 'visigate_rest_search', array(), $req['type'], $req['q'] );
+		$rows = array();
+		$term = trim( (string) $req['q'], " *\t\n\r\0\x0B" );
+		if ( 'users' === $req['type'] && strlen( $term ) >= 2 ) {
+			$users = get_users(
+				array(
+					'search'         => '*' . $term . '*',
+					'search_columns' => array( 'display_name', 'user_login' ),
+					'fields'         => array( 'ID', 'display_name' ),
+					'number'         => 20,
+					'orderby'        => 'display_name',
+				)
+			);
+			foreach ( $users as $user ) {
+				$rows[] = array(
+					'id'    => (int) $user->ID,
+					/* translators: 1: user display name, 2: user ID. */
+					'label' => sprintf( __( '%1$s (#%2$d)', 'visigate' ), sanitize_text_field( $user->display_name ), $user->ID ),
+				);
+			}
+		}
+		$rows = apply_filters( 'visigate_rest_search', $rows, $req['type'], $req['q'] );
 		return rest_ensure_response( is_array( $rows ) ? array_slice( $rows, 0, 20 ) : array() );
 	}
 }
