@@ -2,7 +2,7 @@
 /**
  * Plugin Name:       Visigate – Conditional Content & Visibility Rules
  * Plugin URI:        https://persjay.com/plugins/visigate/
- * Description:       Show or hide any block or Elementor element by role, login status, device, or time. Visual rule builder, server-side evaluation, zero front-end JavaScript.
+ * Description:       Show or hide any block or Elementor element by user, role, login status, device, page type, or time. Visual rule builder, server-side evaluation, zero front-end JavaScript.
  * Version:           1.3.3
  * Requires at least: 6.2
  * Requires PHP:      7.4

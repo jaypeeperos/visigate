@@ -8,7 +8,7 @@ Stable tag: 1.3.3
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-Show or hide any block or Elementor element by role, login status, device, or time. Visual rule builder. No front-end JavaScript.
+Show or hide any block or Elementor element by user, role, login status, device, page type, or time. Visual rule builder. No front-end JavaScript.
 
 == Description ==
 
@@ -25,6 +25,8 @@ https://www.youtube.com/watch?v=SIE5wlU_Eg0
 * Display a phone number or chat prompt during business hours
 * Welcome members whose accounts are less than 7 days old
 * Hide a sign-up prompt from people who are already logged in
+* Show a private note or download link to selected user accounts
+* Display a promotion only on a chosen post type, or only on archive pages
 
 = Key features =
 
