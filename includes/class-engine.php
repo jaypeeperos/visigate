@@ -121,6 +121,14 @@ class Visigate_Engine {
 				$hit = in_array( self::device(), (array) $v, true );
 				return ( 'is_any' === $op ) ? $hit : ! $hit;
 
+			case 'specific_post':
+				if ( ! is_singular() ) {
+					return false;
+				}
+				$post_id = get_queried_object_id();
+				$hit     = $post_id > 0 && in_array( (string) $post_id, array_map( 'strval', (array) $v ), true );
+				return ( 'is_any' === $op ) ? $hit : ! $hit;
+
 			case 'post_type':
 				if ( ! is_singular() && ! is_post_type_archive() ) {
 					return false;

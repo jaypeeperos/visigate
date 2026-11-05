@@ -15,6 +15,8 @@ class Visigate_Ruleset {
 		add_action( 'save_post_' . self::CPT, array( __CLASS__, 'save' ), 10, 2 );
 		add_filter( 'manage_' . self::CPT . '_posts_columns', array( __CLASS__, 'columns' ) );
 		add_action( 'manage_' . self::CPT . '_posts_custom_column', array( __CLASS__, 'column_content' ), 10, 2 );
+		add_filter( 'post_row_actions', array( __CLASS__, 'row_actions' ), 10, 2 );
+		add_action( 'admin_post_visigate_duplicate_set', array( __CLASS__, 'duplicate' ) );
 		add_action( 'rest_api_init', array( __CLASS__, 'register_routes' ) );
 	}
 
@@ -99,6 +101,60 @@ class Visigate_Ruleset {
 
 	/* ---------------------------- List table ---------------------------- */
 
+	public static function row_actions( $actions, $post ) {
+		if ( self::can_duplicate( $post ) ) {
+			$url = add_query_arg(
+				array( 'action' => 'visigate_duplicate_set', 'post' => $post->ID ),
+				admin_url( 'admin-post.php' )
+			);
+			$actions['visigate_duplicate'] = sprintf(
+				'<a href="%s">%s</a>',
+				esc_url( wp_nonce_url( $url, 'visigate_duplicate_set_' . $post->ID ) ),
+				esc_html__( 'Duplicate', 'visigate' )
+			);
+		}
+		return $actions;
+	}
+
+	private static function can_duplicate( $post ) {
+		return $post instanceof WP_Post
+			&& self::CPT === $post->post_type
+			&& ! in_array( $post->post_status, array( 'trash', 'auto-draft' ), true )
+			&& current_user_can( 'edit_post', $post->ID )
+			&& current_user_can( get_post_type_object( self::CPT )->cap->create_posts );
+	}
+
+	public static function duplicate() {
+		$id = isset( $_GET['post'] ) && is_string( $_GET['post'] ) ? absint( $_GET['post'] ) : 0;
+		check_admin_referer( 'visigate_duplicate_set_' . $id );
+
+		$source = $id ? get_post( $id ) : null;
+		if ( ! self::can_duplicate( $source ) ) {
+			wp_die( esc_html__( 'You cannot duplicate this rule set.', 'visigate' ), '', array( 'response' => 403 ) );
+		}
+
+		$rules   = get_post_meta( $id, self::META, true );
+		$copy_id = wp_insert_post(
+			array(
+				'post_type'   => self::CPT,
+				'post_status' => 'draft',
+				/* translators: %s: original rule set title. */
+				'post_title'  => wp_slash( sprintf( __( '%s (Copy)', 'visigate' ), $source->post_title ) ),
+			),
+			true
+		);
+		if ( is_wp_error( $copy_id ) || ! $copy_id ) {
+			wp_die( esc_html__( 'Could not create the rule set copy.', 'visigate' ), '', array( 'response' => 500 ) );
+		}
+		if ( is_array( $rules ) && ! add_post_meta( $copy_id, self::META, wp_slash( $rules ), true ) ) {
+			wp_delete_post( $copy_id, true );
+			wp_die( esc_html__( 'Could not save the copied visibility rules.', 'visigate' ), '', array( 'response' => 500 ) );
+		}
+
+		wp_safe_redirect( get_edit_post_link( $copy_id, 'raw' ) );
+		exit;
+	}
+
 	public static function columns( $cols ) {
 		return array(
 			'cb'            => $cols['cb'],
@@ -172,6 +228,34 @@ class Visigate_Ruleset {
 					'id'    => (int) $user->ID,
 					/* translators: 1: user display name, 2: user ID. */
 					'label' => sprintf( __( '%1$s (#%2$d)', 'visigate' ), sanitize_text_field( $user->display_name ), $user->ID ),
+				);
+			}
+		}
+		if ( 'posts' === $req['type'] && strlen( $term ) >= 2 ) {
+			$types = array_filter( get_post_types( array(), 'objects' ), 'is_post_type_viewable' );
+			$posts = get_posts(
+				array(
+					'post_type'              => array_keys( $types ),
+					'post_status'            => 'publish',
+					's'                      => $term,
+					'search_columns'         => array( 'post_title' ),
+					'numberposts'            => 20,
+					'orderby'                => 'relevance',
+					'update_post_meta_cache' => false,
+					'update_post_term_cache' => false,
+				)
+			);
+			foreach ( $posts as $post ) {
+				$title  = sanitize_text_field( $post->post_title );
+				$rows[] = array(
+					'id'    => (int) $post->ID,
+					/* translators: 1: post title, 2: singular post type label, 3: post ID. */
+					'label' => sprintf(
+						__( '%1$s (%2$s #%3$d)', 'visigate' ),
+						'' !== $title ? $title : __( '(no title)', 'visigate' ),
+						$types[ $post->post_type ]->labels->singular_name,
+						$post->ID
+					),
 				);
 			}
 		}

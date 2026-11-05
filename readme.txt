@@ -4,7 +4,7 @@ Tags: conditional content, visibility, elementor, block editor, personalization
 Requires at least: 6.2
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.3.3
+Stable tag: 1.3.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -33,6 +33,7 @@ https://www.youtube.com/watch?v=SIE5wlU_Eg0
 * **Visual rule builder:** combine conditions without code. Conditions in a group must all match (AND), and any matching group is enough (OR).
 * **Plain-English summaries:** every rule set describes itself, so you can check its logic at a glance.
 * **Reusable rule sets:** build a rule once and use it across your site. Edit it in one place and every use updates.
+* **Duplicate rule sets:** use Duplicate in the Rule Sets list to copy the visibility rules into a new draft that you can edit independently.
 * **Block editor support:** add a Visibility Rules panel to every block, using a saved rule set or custom rules for that block.
 * **Elementor support:** apply a saved rule set to widgets, sections, columns and containers from the Advanced tab.
 * **Shortcode and PHP helper:** use rules with other page builders, in classic content, or in theme templates.
@@ -43,7 +44,7 @@ https://www.youtube.com/watch?v=SIE5wlU_Eg0
 
 * **User:** login status, user role, specific users, user capability, account age
 * **Visitor:** device type (desktop, tablet, mobile)
-* **Page location:** post type and page view (singular or archive)
+* **Page location:** specific pages or posts, post type, and page view (singular or archive)
 * **Time:** day of week, time of day, date range
 
 = Documentation =
@@ -127,6 +128,8 @@ Add **Specific users** and search by display name or username. **Is any of** mat
 
 = What do the page location rules match? =
 
+**Specific Page or Post** searches published content by title, including public-facing custom post types. Use **is any of** to match selected entries or **is none of** to match other singular entries. Both operators check the page being visited. Archive pages and the blog posts index do not match this condition.
+
 **Post type** checks the current page's single item or dedicated post type archive. It supports public-facing custom post types. **Page view** matches either a single item or a WordPress archive, including category, tag, author, and date archives. Search results and the blog posts index are separate views. These rules check the page being visited, regardless of which item a Query Loop block is displaying.
 
 = How can I test a rule? =
@@ -151,6 +154,10 @@ Yes. Visigate Pro is a separate plugin sold outside WordPress.org. This plugin d
 6. Cache safety, admin preview and developer reference on the settings screen.
 
 == Changelog ==
+
+= 1.3.4 =
+* Added Specific Page or Post rules for targeting individual published pages, posts, and public-facing custom post entries.
+* Added a Duplicate action that copies a rule set's visibility rules into a new draft.
 
 = 1.3.3 =
 * Added Specific users rules for including or excluding selected WordPress accounts.
@@ -179,6 +186,9 @@ Pro conditions moved to the separate Visigate Pro add-on; unknown conditions now
 Initial release.
 
 == Upgrade Notice ==
+
+= 1.3.4 =
+Adds individual page and post targeting and lets you duplicate saved rule sets as drafts.
 
 = 1.3.3 =
 Adds server-side visibility rules for specific users, post types, and singular or archive views.

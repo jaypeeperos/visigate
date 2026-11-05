@@ -134,6 +134,9 @@ class Visigate_Conditions {
 			),
 
 			// ---- Page location ----------------------------------------------
+			'specific_post'    => array(
+				'label' => __( 'Specific Page or Post', 'visigate' ), 'group' => 'location', 'input' => 'async', 'source' => 'posts', 'ops' => $in,
+			),
 			'post_type'        => array(
 				'label' => __( 'Post type', 'visigate' ), 'group' => 'location', 'input' => 'tokens', 'options' => 'post_types', 'ops' => $in,
 			),
