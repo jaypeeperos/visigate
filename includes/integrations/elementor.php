@@ -3,16 +3,54 @@ defined( 'ABSPATH' ) || exit;
 
 /**
  * Elementor: adds a "Visigate" section (Advanced tab) to widgets, sections, columns
- * and containers, letting you pick a saved Rule Set. Hidden elements are never rendered
- * on the front end; the editor always shows everything.
+ * and containers, letting you pick a saved Rule Set or define custom rules. Hidden
+ * elements are never rendered on the front end; the editor always shows everything.
  *
  * Other builders (Divi, Beaver, Bricks, WPBakery, Oxygen…) can use the [visigate] shortcode
  * or the visigate_visible() PHP helper.
  */
 
 add_action(
+	'elementor/controls/register',
+	function ( $controls_manager ) {
+		require_once __DIR__ . '/class-elementor-rules-control.php';
+		$controls_manager->register( new Visigate_Elementor_Rules_Control() );
+	}
+);
+
+/** Read classic settings and atomic typed props through the same interface. */
+function visigate_elementor_value( $value ) {
+	if ( is_array( $value ) && isset( $value['$$type'] ) ) {
+		return empty( $value['disabled'] ) ? ( $value['value'] ?? '' ) : '';
+	}
+	return $value;
+}
+
+function visigate_elementor_setting( $element, $key ) {
+	return visigate_elementor_value( $element->get_settings( $key ) );
+}
+
+/** Saved and custom rules must both allow an element, matching the block editor. */
+function visigate_elementor_visible( $element ) {
+	$set = (int) visigate_elementor_setting( $element, 'visigate_set' );
+	if ( $set && ! Visigate_Engine::set_visible( $set ) ) {
+		return false;
+	}
+	$rules = visigate_elementor_setting( $element, 'visigate_rules' );
+	if ( is_string( $rules ) ) {
+		$rules = json_decode( $rules, true );
+	}
+	return ! is_array( $rules ) || Visigate_Engine::visible( $rules );
+}
+
+add_action(
 	'elementor/element/after_section_end',
 	function ( $element, $section_id, $args ) {
+		// This hook also runs for documents such as Post Settings. Visibility
+		// rules only apply to rendered elements, not document settings.
+		if ( ! $element instanceof \Elementor\Element_Base ) {
+			return;
+		}
 		// Containers and third-party widgets use different section IDs. Register
 		// after the first Advanced section instead of depending on its name.
 		if ( ! isset( $args['tab'] ) || \Elementor\Controls_Manager::TAB_ADVANCED !== $args['tab'] ) {
@@ -25,7 +63,7 @@ add_action(
 		$brand = visigate_brand();
 
 		// Users who may not manage Visigate (e.g. clients, when an add-on restricts access) get a read-only note.
-		// The rule-set value is kept in a hidden control so saving the page never removes it.
+		// Rule values are kept in hidden controls so saving the page never removes them.
 		if ( ! current_user_can( visigate_capability() ) ) {
 			$element->start_controls_section(
 				'visigate_section',
@@ -36,6 +74,7 @@ add_action(
 				)
 			);
 			$element->add_control( 'visigate_set', array( 'type' => \Elementor\Controls_Manager::HIDDEN, 'default' => '' ) );
+			$element->add_control( 'visigate_rules', array( 'type' => \Elementor\Controls_Manager::HIDDEN, 'default' => '' ) );
 			$element->add_control(
 				'visigate_locked_note',
 				array(
@@ -47,7 +86,7 @@ add_action(
 			return;
 		}
 
-		$options = array( '' => __( '— Always visible —', 'visigate' ) );
+		$options = array( '' => __( '— None —', 'visigate' ) );
 		foreach ( Visigate_Ruleset::all_sets() as $set ) {
 			$options[ $set['id'] ] = $set['title'];
 		}
@@ -74,6 +113,17 @@ add_action(
 				),
 			)
 		);
+		$element->add_control(
+			'visigate_rules',
+			array(
+				'label'       => __( 'Custom rules for this element', 'visigate' ),
+				'type'        => 'visigate_rules',
+				'default'     => '',
+				'separator'   => 'before',
+				'label_block' => true,
+				'description' => __( 'If a saved rule set is selected, both it and these custom rules must allow this element to show.', 'visigate' ),
+			)
+		);
 		$element->end_controls_section();
 	},
 	10,
@@ -87,22 +137,20 @@ $visigate_elementor_filter = function ( $should_render, $element ) {
 	if ( class_exists( '\Elementor\Plugin' ) && \Elementor\Plugin::$instance->editor && \Elementor\Plugin::$instance->editor->is_edit_mode() ) {
 		return $should_render;
 	}
-	$set = (int) $element->get_settings( 'visigate_set' );
-	if ( ! $set ) {
-		return $should_render;
-	}
 	if ( Visigate_Frontend::preview_enabled() ) {
 		return $should_render;
 	}
-	return Visigate_Engine::set_visible( $set );
+	return visigate_elementor_visible( $element );
 };
 
 // Elementor's element cache stores the HTML of "static" elements and reuses it for every visitor.
-// Elements with a rule set must be rendered fresh per visitor, so flag them as dynamic.
+// Elements with saved or custom rules must render fresh per visitor.
 add_filter(
 	'elementor/element/is_dynamic_content',
 	function ( $is_dynamic, $raw_data ) {
-		return $is_dynamic || ! empty( $raw_data['settings']['visigate_set'] );
+		return $is_dynamic
+			|| (bool) visigate_elementor_value( $raw_data['settings']['visigate_set'] ?? '' )
+			|| (bool) visigate_elementor_value( $raw_data['settings']['visigate_rules'] ?? '' );
 	},
 	10,
 	2
@@ -112,3 +160,5 @@ foreach ( array( 'widget', 'section', 'column', 'container' ) as $visigate_el_ty
 	add_filter( "elementor/frontend/{$visigate_el_type}/should_render", $visigate_elementor_filter, 10, 2 );
 }
 unset( $visigate_el_type );
+
+require_once __DIR__ . '/elementor-atomic.php';

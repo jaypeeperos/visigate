@@ -2,7 +2,7 @@
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Settings page + asset loading for the visual builder (block editor + Rule Set screen).
+ * Settings page + visual builder assets for blocks, Elementor and Rule Sets.
  * Nothing in here loads on the public front end.
  */
 class Visigate_Admin {
@@ -14,6 +14,8 @@ class Visigate_Admin {
 		add_action( 'admin_init', array( __CLASS__, 'register_settings' ) );
 		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'enqueue_admin' ) );
 		add_action( 'enqueue_block_editor_assets', array( __CLASS__, 'enqueue_editor' ) );
+		add_action( 'elementor/editor/after_enqueue_scripts', array( __CLASS__, 'enqueue_elementor' ) );
+		add_action( 'elementor/editor/v2/scripts/enqueue', array( __CLASS__, 'enqueue_elementor_atomic' ) );
 		add_filter(
 			'option_page_capability_visigate',
 			function () {
@@ -140,6 +142,30 @@ class Visigate_Admin {
 		wp_enqueue_script( 'visigate-builder', VISIGATE_URL . 'assets/js/builder.js', array( 'wp-element', 'wp-components', 'wp-i18n', 'wp-api-fetch', 'wp-hooks' ), VISIGATE_VERSION, true );
 		wp_set_script_translations( 'visigate-builder', 'visigate' );
 		wp_add_inline_script( 'visigate-builder', 'window.VisigateData = ' . wp_json_encode( self::js_data() ) . ';', 'before' );
+	}
+
+	public static function enqueue_elementor() {
+		if ( ! current_user_can( visigate_capability() ) ) {
+			return;
+		}
+		self::enqueue_builder();
+		wp_enqueue_script( 'visigate-elementor', VISIGATE_URL . 'assets/js/elementor.js', array( 'elementor-editor', 'visigate-builder' ), VISIGATE_VERSION, true );
+		wp_enqueue_style( 'visigate-elementor', VISIGATE_URL . 'assets/css/elementor.css', array( 'visigate-builder' ), VISIGATE_VERSION );
+	}
+
+	public static function enqueue_elementor_atomic() {
+		if ( ! current_user_can( visigate_capability() ) || ! wp_script_is( 'elementor-v2-editor-editing-panel', 'registered' ) ) {
+			return;
+		}
+		self::enqueue_builder();
+		wp_enqueue_script(
+			'visigate-elementor-atomic',
+			VISIGATE_URL . 'assets/js/elementor-atomic.js',
+			array( 'visigate-builder', 'elementor-v2-editor-editing-panel', 'elementor-v2-editor-controls', 'elementor-v2-editor-props' ),
+			VISIGATE_VERSION,
+			true
+		);
+		wp_enqueue_style( 'visigate-elementor', VISIGATE_URL . 'assets/css/elementor.css', array( 'visigate-builder' ), VISIGATE_VERSION );
 	}
 
 	public static function enqueue_admin( $hook ) {

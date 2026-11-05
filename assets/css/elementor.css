@@ -1,0 +1,14 @@
+/* Keep WordPress components readable in Elementor's light and dark panels. */
+.vg-elementor-rules { min-width: 0; }
+.vg-elementor-rules .vg-elementor-builder { background: #fff; color: #1e1e1e; padding: 10px; border-radius: 4px; margin: 10px 0; color-scheme: light; }
+.vg-elementor-rules .vg-builder { max-width: none; }
+.vg-elementor-rules .vg-group { padding: 8px; }
+.vg-elementor-rules .vg-cond { padding: 6px; }
+.vg-elementor-rules .vg-cond__top > :first-child { min-width: 0; }
+.vg-elementor-rules .vg-pair { grid-template-columns: 1fr; }
+.vg-elementor-rules .components-base-control { width: 100%; min-width: 0; }
+.vg-elementor-rules .components-text-control__input,
+.vg-elementor-rules .components-select-control__input,
+.vg-elementor-rules .components-form-token-field__input { color: #1e1e1e; background: #fff; }
+.vg-elementor-rules .components-button { white-space: normal; height: auto; min-height: 32px; }
+.vg-elementor-rules .vg-summary { overflow-wrap: anywhere; }

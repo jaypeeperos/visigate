@@ -4,7 +4,7 @@ Tags: conditional content, visibility, elementor, block editor, personalization
 Requires at least: 6.2
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.3.4
+Stable tag: 1.3.5
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -35,7 +35,7 @@ https://www.youtube.com/watch?v=SIE5wlU_Eg0
 * **Reusable rule sets:** build a rule once and use it across your site. Edit it in one place and every use updates.
 * **Duplicate rule sets:** use Duplicate in the Rule Sets list to copy the visibility rules into a new draft that you can edit independently.
 * **Block editor support:** add a Visibility Rules panel to every block, using a saved rule set or custom rules for that block.
-* **Elementor support:** apply a saved rule set to widgets, sections, columns and containers from the Advanced tab.
+* **Elementor support:** apply a saved rule set or build custom rules for classic widgets and containers, plus atomic widgets and layouts.
 * **Shortcode and PHP helper:** use rules with other page builders, in classic content, or in theme templates.
 * **Admin preview:** reveal hidden content on the live page, faded and outlined in red, to check your rules.
 * **Cache safety:** pages using specific user, device, or time rules can be flagged automatically so page cache plugins skip them.
@@ -104,7 +104,9 @@ Yes, through the `[visigate]` shortcode or the `visigate_visible()` PHP helper. 
 
 = Where are the Elementor visibility controls? =
 
-Select a widget, section, column or container, then open Advanced → Visigate: Visibility and choose a saved rule set. Flexbox and Grid containers are supported. A rule on a container controls the whole container and its contents. Elements remain visible while editing in Elementor.
+Select a widget, section, column or container, then open Advanced → Visigate: Visibility and choose a saved rule set or use "Custom rules for this element". The custom rule builder supports the same conditions, AND/OR groups and show/hide actions as the block editor. If you configure both a saved set and custom rules, both must allow the element to show. Flexbox and Grid containers are supported. A rule on a container controls the whole container and its contents. Elements remain visible while editing in Elementor.
+
+Atomic elements use their own Visigate: Visibility section in the atomic settings panel. Saved sets and custom rules work on atomic widgets and layouts, including Flexbox, Grid and Div Block. Requires an Elementor version with the atomic controls and props-schema APIs; classic Elementor support remains available on older versions.
 
 = Will it slow down my site? =
 
@@ -155,6 +157,12 @@ Yes. Visigate Pro is a separate plugin sold outside WordPress.org. This plugin d
 
 == Changelog ==
 
+= 1.3.5 =
+* Added custom visibility rules for individual Elementor elements using the shared visual rule builder, including show/hide actions and AND/OR groups.
+* Added saved rule sets and custom rules for Elementor atomic widgets and layouts, including Flexbox, Grid and Div Block.
+* Fix: visibility controls no longer appear in Elementor Post Settings.
+* Improve: Elementor element caching now accounts for custom rules and atomic typed settings.
+
 = 1.3.4 =
 * Added Specific Page or Post rules for targeting individual published pages, posts, and public-facing custom post entries.
 * Added a Duplicate action that copies a rule set's visibility rules into a new draft.
@@ -186,6 +194,9 @@ Pro conditions moved to the separate Visigate Pro add-on; unknown conditions now
 Initial release.
 
 == Upgrade Notice ==
+
+= 1.3.5 =
+Adds custom rules and atomic element support in Elementor, with cache handling for visitor-specific visibility. Removes visibility controls from Post Settings.
 
 = 1.3.4 =
 Adds individual page and post targeting and lets you duplicate saved rule sets as drafts.
