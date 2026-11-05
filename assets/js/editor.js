@@ -36,7 +36,7 @@
 		);
 		// Extension point: add-ons can append controls (e.g. fallback content) to the panel.
 		var extras = wp.hooks.applyFilters( 'visigate.panel.extras', [], props );
-		return el( comp.PanelBody, { title: __( 'Visibility Rules', 'visigate' ), initialOpen: hasRules( a ), icon: 'visibility' },
+		return el( comp.PanelBody, { title: __( 'Visibility Rules', 'visigate' ), initialOpen: props.isPatternInstance || hasRules( a ), icon: 'visibility' },
 			el( comp.SelectControl, {
 				label: __( 'Saved rule set', 'visigate' ),
 				value: String( a.visigateSet || 0 ),
@@ -46,7 +46,7 @@
 				__nextHasNoMarginBottom: true,
 			} ),
 			el( 'hr' ),
-			el( 'p', { className: 'vg-panel-title' }, __( 'Custom rules for this block', 'visigate' ) ),
+			el( 'p', { className: 'vg-panel-title' }, props.isPatternInstance ? __( 'Custom rules for this pattern', 'visigate' ) : __( 'Custom rules for this block', 'visigate' ) ),
 			el( Builder, {
 				value: a.visigateRules,
 				onChange: function ( v ) {
@@ -61,6 +61,90 @@
 	// but get no panel and no canvas indicator.
 	if ( D.canManage === false ) {
 		return;
+	}
+
+	// Content-only pattern editing can suppress InspectorControls entirely.
+	// A plugin sidebar stays accessible and writes to the placement's wrapper,
+	// never to the shared wp_block record or the pattern's internal blocks.
+	var sidebarApi = wp.editor && wp.editor.PluginSidebar ? wp.editor : wp.editPost;
+	if ( sidebarApi && sidebarApi.PluginSidebar && wp.plugins && wp.data ) {
+		function PatternVisibility() {
+			var choice = wp.element.useState( '' );
+			var context = wp.data.useSelect( function ( select ) {
+				var store = select( 'core/block-editor' );
+				var selected = store.getSelectedBlockClientId();
+				return { blocks: store.getBlocks(), selected: selected, parents: selected ? store.getBlockParents( selected ) : null };
+			}, [] );
+			var patterns = [];
+			function collect( blocks ) {
+				( blocks || [] ).forEach( function ( block ) {
+					var metadata = block.attributes.metadata || {};
+					if ( block.name === 'core/block' || metadata.patternName ) {
+						patterns.push( {
+							clientId: block.clientId,
+							name: block.name,
+							attributes: block.attributes,
+							title: metadata.name || metadata.patternName || __( 'Synced pattern', 'visigate' ) + ( block.attributes.ref ? ' #' + block.attributes.ref : '' ),
+						} );
+					}
+					// Synced content belongs to another entity; only its wrapper is local.
+					if ( block.name !== 'core/block' ) {
+						collect( block.innerBlocks );
+					}
+				} );
+			}
+			collect( context.blocks );
+			var ancestry = context.selected ? [ context.selected ].concat( ( context.parents || [] ).slice().reverse() ) : [];
+			var nearest = '';
+			ancestry.some( function ( id ) {
+				if ( patterns.some( function ( pattern ) { return pattern.clientId === id; } ) ) {
+					nearest = id;
+					return true;
+				}
+				return false;
+			} );
+			wp.element.useEffect( function () { choice[ 1 ]( '' ); }, [ context.selected ] );
+			var targetId = choice[ 0 ] || nearest;
+			var target = patterns.find( function ( pattern ) { return pattern.clientId === targetId; } );
+			var options = [ { value: '', label: __( '— Select a pattern —', 'visigate' ) } ].concat(
+				patterns.map( function ( pattern, index ) {
+					return { value: pattern.clientId, label: ( index + 1 ) + '. ' + pattern.title };
+				} )
+			);
+			return el( sidebarApi.PluginSidebar, { name: 'pattern-visibility', title: __( 'Pattern Visibility', 'visigate' ), icon: 'visibility' },
+				el( 'div', { style: { padding: '16px' } },
+					el( comp.SelectControl, {
+						label: __( 'Pattern placement', 'visigate' ),
+						value: target ? target.clientId : '',
+						options: options,
+						onChange: choice[ 1 ],
+						__nextHasNoMarginBottom: true,
+					} ),
+					el( 'p', null, patterns.length
+						? __( 'Select a pattern on the page or choose a placement above. These rules apply to this placement of the pattern.', 'visigate' )
+						: __( 'Insert a pattern to configure visibility for its placement.', 'visigate' ) )
+				),
+				target ? el( Panel, {
+					key: target.clientId,
+					clientId: target.clientId,
+					name: target.name,
+					attributes: target.attributes,
+					isPatternInstance: true,
+					setAttributes: function ( attributes ) {
+						wp.data.dispatch( 'core/block-editor' ).updateBlockAttributes( target.clientId, attributes );
+					},
+				} ) : null
+			);
+		}
+		wp.plugins.registerPlugin( 'visigate-pattern-visibility', {
+			icon: 'visibility',
+			render: function () {
+				return el( Fragment, null,
+					sidebarApi.PluginSidebarMoreMenuItem ? el( sidebarApi.PluginSidebarMoreMenuItem, { target: 'pattern-visibility', icon: 'visibility' }, __( 'Pattern Visibility', 'visigate' ) ) : null,
+					el( PatternVisibility )
+				);
+			},
+		} );
 	}
 
 	addFilter( 'editor.BlockEdit', 'visigate/panel', createHOC( function ( BlockEdit ) {

@@ -94,6 +94,12 @@ Visigate is fully usable on its own. [Visigate Pro](https://persjay.com/plugins/
 
 == Frequently Asked Questions ==
 
+= Can I set visibility on a pattern without editing it? =
+
+Yes. Open Pattern Visibility from the editor's Plugins menu (or its eye icon when pinned). Select a synced or inserted unsynced pattern on the page, or choose it from the Pattern placement list. Pick a saved rule set or add custom rules. The rules are saved on that placement, so two uses of the same synced pattern can have different visibility. Rules on blocks inside the original pattern continue to apply as well.
+
+This sidebar also works when WordPress uses content-only pattern editing and hides the usual block settings. You can configure the placement without entering Edit pattern. Pro fallback controls are available in the same panel according to your plan.
+
 = Does this plugin require Elementor or WooCommerce? =
 
 No. Visigate works with the block editor on its own, and its Elementor support turns on when Elementor is active. WooCommerce conditions are part of Visigate Pro.
@@ -158,6 +164,7 @@ Yes. Visigate Pro is a separate plugin sold outside WordPress.org. This plugin d
 == Changelog ==
 
 = 1.3.5 =
+* Added a Pattern Visibility sidebar for setting rules on synced and inserted unsynced pattern placements without entering pattern editing.
 * Added custom visibility rules for individual Elementor elements using the shared visual rule builder, including show/hide actions and AND/OR groups.
 * Added saved rule sets and custom rules for Elementor atomic widgets and layouts, including Flexbox, Grid and Div Block.
 * Fix: visibility controls no longer appear in Elementor Post Settings.
