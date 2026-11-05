@@ -1,8 +1,12 @@
 /** Connect the shared rule builder to Elementor's settings and undo history. */
 ( function ( wp, $ ) {
 	'use strict';
+	var registered = false;
 
 	function register() {
+		if ( registered || ! window.elementor || ! window.elementor.modules || ! window.elementor.modules.controls || ! window.elementor.modules.controls.BaseData ) {
+			return;
+		}
 		var Base = window.elementor.modules.controls.BaseData;
 		var RulesControl = Base.extend( {
 			onReady: function () {
@@ -51,7 +55,12 @@
 			},
 		} );
 		window.elementor.addControlView( 'visigate_rules', RulesControl );
+		registered = true;
 	}
 
+	// Elementor 4 uses native events. Register immediately when the dependency
+	// has loaded, and retain both events for older or deferred editor startup.
+	window.addEventListener( 'elementor/init', register );
 	$( window ).on( 'elementor:init', register );
+	register();
 }( window.wp, window.jQuery ) );

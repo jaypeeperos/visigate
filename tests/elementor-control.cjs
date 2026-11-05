@@ -4,7 +4,7 @@ const fs = require( 'node:fs' );
 const vm = require( 'node:vm' );
 
 for ( const modern of [ true, false ] ) {
-	let init, Control, rendered, unmounted = false;
+	let init, nativeInit, Control, rendered, registrations = 0, unmounted = false;
 	const mount = {};
 	const Base = {
 		extend( methods ) { return methods; },
@@ -23,15 +23,19 @@ for ( const modern of [ true, false ] ) {
 	}
 	const window = {
 		wp: { element },
+		addEventListener( event, callback ) { assert.equal( event, 'elementor/init' ); nativeInit = callback; },
 		jQuery: () => ( { on( event, callback ) { assert.equal( event, 'elementor:init' ); init = callback; } } ),
 		VisigateBuilder: function Builder() {},
 		elementor: {
 			modules: { controls: { BaseData: Base } },
-			addControlView( type, control ) { assert.equal( type, 'visigate_rules' ); Control = control; },
+			addControlView( type, control ) { assert.equal( type, 'visigate_rules' ); Control = control; registrations++; },
 		},
 	};
 	vm.runInNewContext( fs.readFileSync( __dirname + '/../assets/js/elementor.js', 'utf8' ), { window } );
+	assert.ok( Control, 'Register immediately even if Elementor init already fired' );
+	nativeInit();
 	init();
+	assert.equal( registrations, 1, 'Native and legacy events must not duplicate registration' );
 	let saved = '';
 	const view = Object.assign( {}, Control, {
 		el: { querySelector: () => mount },
@@ -63,4 +67,19 @@ for ( const modern of [ true, false ] ) {
 	assert.equal( rendered.props.value, null );
 	view.onBeforeDestroy();
 }
-console.log( 'PASS: modern/legacy React mounting, JSON persistence, drafts, external changes and cleanup.' );
+
+// Deferred editor startup must register through the current native event too.
+let deferred, registered = false;
+const deferredWindow = {
+	wp: {},
+	addEventListener( event, callback ) { deferred = callback; },
+	jQuery: () => ( { on() {} } ),
+};
+vm.runInNewContext( fs.readFileSync( __dirname + '/../assets/js/elementor.js', 'utf8' ), { window: deferredWindow } );
+deferredWindow.elementor = {
+	modules: { controls: { BaseData: { extend: ( methods ) => methods } } },
+	addControlView() { registered = true; },
+};
+deferred();
+assert.ok( registered, 'Register when Elementor starts after the script loads' );
+console.log( 'PASS: immediate/deferred registration, native/legacy events, React mounting, JSON persistence and cleanup.' );

@@ -162,6 +162,8 @@ Yes. Visigate Pro is a separate plugin sold outside WordPress.org. This plugin d
 * Added saved rule sets and custom rules for Elementor atomic widgets and layouts, including Flexbox, Grid and Div Block.
 * Fix: visibility controls no longer appear in Elementor Post Settings.
 * Improve: Elementor element caching now accounts for custom rules and atomic typed settings.
+* Fix: custom rule fields now load in Elementor 4's classic element panels using the current editor asset hooks.
+* Improve: rule builder styling follows Elementor's light and dark editor themes.
 
 = 1.3.4 =
 * Added Specific Page or Post rules for targeting individual published pages, posts, and public-facing custom post entries.

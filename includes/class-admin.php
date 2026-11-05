@@ -15,6 +15,7 @@ class Visigate_Admin {
 		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'enqueue_admin' ) );
 		add_action( 'enqueue_block_editor_assets', array( __CLASS__, 'enqueue_editor' ) );
 		add_action( 'elementor/editor/after_enqueue_scripts', array( __CLASS__, 'enqueue_elementor' ) );
+		add_action( 'elementor/editor/scripts/enqueue', array( __CLASS__, 'enqueue_elementor' ) );
 		add_action( 'elementor/editor/v2/scripts/enqueue', array( __CLASS__, 'enqueue_elementor_atomic' ) );
 		add_filter(
 			'option_page_capability_visigate',
@@ -149,8 +150,13 @@ class Visigate_Admin {
 			return;
 		}
 		self::enqueue_builder();
-		wp_enqueue_script( 'visigate-elementor', VISIGATE_URL . 'assets/js/elementor.js', array( 'elementor-editor', 'visigate-builder' ), VISIGATE_VERSION, true );
-		wp_enqueue_style( 'visigate-elementor', VISIGATE_URL . 'assets/css/elementor.css', array( 'visigate-builder' ), VISIGATE_VERSION );
+		wp_enqueue_script( 'visigate-elementor', VISIGATE_URL . 'assets/js/elementor.js', array( 'elementor-editor', 'visigate-builder' ), self::asset_version( 'assets/js/elementor.js' ), true );
+		wp_enqueue_style( 'visigate-elementor', VISIGATE_URL . 'assets/css/elementor.css', array( 'visigate-builder' ), self::asset_version( 'assets/css/elementor.css' ) );
+	}
+
+	/** Refresh editor assets when a local build replaces the same plugin version. */
+	private static function asset_version( $path ) {
+		return VISIGATE_VERSION . '.' . filemtime( VISIGATE_DIR . $path );
 	}
 
 	public static function enqueue_elementor_atomic() {
@@ -165,7 +171,7 @@ class Visigate_Admin {
 			VISIGATE_VERSION,
 			true
 		);
-		wp_enqueue_style( 'visigate-elementor', VISIGATE_URL . 'assets/css/elementor.css', array( 'visigate-builder' ), VISIGATE_VERSION );
+		wp_enqueue_style( 'visigate-elementor', VISIGATE_URL . 'assets/css/elementor.css', array( 'visigate-builder' ), self::asset_version( 'assets/css/elementor.css' ) );
 	}
 
 	public static function enqueue_admin( $hook ) {
