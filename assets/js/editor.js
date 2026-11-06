@@ -14,6 +14,19 @@
 	var __ = wp.i18n.__;
 	var D = window.VisigateData || { sets: [] };
 	var Builder = window.VisigateBuilder;
+	var sidebarApi = wp.editor && wp.editor.PluginSidebar ? wp.editor : wp.editPost;
+	var hasSidebar = !! ( sidebarApi && sidebarApi.PluginSidebar && wp.plugins && wp.data );
+
+	function openVisigate() {
+		wp.data.dispatch( 'core/interface' ).enableComplementaryArea( 'core', 'visigate-pattern-visibility/pattern-visibility' );
+	}
+
+	function OpenVisigateButton() {
+		return el( comp.Button, { variant: 'secondary', icon: 'visibility', onClick: openVisigate },
+			/* translators: %s: plugin display name */
+			wp.i18n.sprintf( __( 'Open %s', 'visigate' ), D.brand || 'Visigate' )
+		);
+	}
 
 	function hasRules( a ) {
 		return !! ( a && ( a.visigateSet || ( a.visigateRules && a.visigateRules.groups && a.visigateRules.groups.length ) ) );
@@ -53,6 +66,8 @@
 					props.setAttributes( { visigateRules: v && v.groups && v.groups.length ? v : undefined } );
 				},
 			} ),
+			hasSidebar && ! props.isPatternInstance && ( props.name === 'core/block' || ( a.metadata && a.metadata.patternName ) )
+				? el( 'p', null, el( OpenVisigateButton ) ) : null,
 			extras
 		);
 	}
@@ -66,8 +81,7 @@
 	// Content-only pattern editing can suppress InspectorControls entirely.
 	// A plugin sidebar stays accessible and writes to the placement's wrapper,
 	// never to the shared wp_block record or the pattern's internal blocks.
-	var sidebarApi = wp.editor && wp.editor.PluginSidebar ? wp.editor : wp.editPost;
-	if ( sidebarApi && sidebarApi.PluginSidebar && wp.plugins && wp.data ) {
+	if ( hasSidebar ) {
 		function PatternVisibility() {
 			var choice = wp.element.useState( '' );
 			var context = wp.data.useSelect( function ( select ) {
@@ -141,7 +155,15 @@
 			render: function () {
 				return el( Fragment, null,
 					sidebarApi.PluginSidebarMoreMenuItem ? el( sidebarApi.PluginSidebarMoreMenuItem, { target: 'pattern-visibility', icon: 'visibility' }, __( 'Pattern Visibility', 'visigate' ) ) : null,
-					el( PatternVisibility )
+					el( PatternVisibility ),
+					sidebarApi.PluginDocumentSettingPanel ? el( sidebarApi.PluginDocumentSettingPanel, {
+						name: 'visigate-shortcut',
+						title: D.brand || __( 'Visigate', 'visigate' ),
+						icon: 'visibility',
+					},
+						el( 'p', null, __( 'Manage visibility rules for pattern placements on this page.', 'visigate' ) ),
+						el( OpenVisigateButton )
+					) : null
 				);
 			},
 		} );

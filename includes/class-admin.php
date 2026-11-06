@@ -189,6 +189,8 @@ class Visigate_Admin {
 		wp_enqueue_script(
 			'visigate-editor',
 			VISIGATE_URL . 'assets/js/editor.js',
+			// wp-editor loads core/interface, including builds that bundle it
+			// without registering a separate wp-interface script handle.
 			array( 'visigate-builder', 'wp-hooks', 'wp-compose', 'wp-block-editor', 'wp-blocks', 'wp-i18n', 'wp-data', 'wp-plugins', 'wp-editor' ),
 			self::asset_version( 'assets/js/editor.js' ),
 			true

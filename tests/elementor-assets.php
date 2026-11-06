@@ -72,4 +72,8 @@ $scripts = array();
 $can_manage = false;
 do_action( 'elementor/editor/scripts/enqueue' );
 check( ! isset( $scripts['visigate-elementor'] ), 'Restricted editors must not load management controls' );
+$can_manage = true;
+Visigate_Admin::enqueue_editor();
+check( ! in_array( 'wp-interface', $scripts['visigate-editor']['deps'], true ), 'Do not depend on a standalone interface handle; current WordPress bundles it in wp-editor' );
+check( in_array( 'wp-editor', $scripts['visigate-editor']['deps'], true ), 'Load the editor APIs before the sidebar adapter' );
 echo "PASS: actual Elementor 4 loader sequence, classic/atomic assets, Pro presets, cache versions and legacy loading.\n";
