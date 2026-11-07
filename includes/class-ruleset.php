@@ -64,6 +64,32 @@ class Visigate_Ruleset {
 		return $out;
 	}
 
+	/**
+	 * Rule sets that exist but are not published (draft, pending, private, scheduled or in the Trash).
+	 * Content that uses one is hidden, so editors list them with a warning instead of showing "None".
+	 */
+	public static function unpublished_sets() {
+		$posts = get_posts(
+			array(
+				'post_type' => self::CPT, 'post_status' => array( 'draft', 'pending', 'private', 'future', 'trash' ),
+				'numberposts' => 200, 'orderby' => 'title', 'order' => 'ASC', 'no_found_rows' => true,
+			)
+		);
+		$out = array();
+		foreach ( $posts as $p ) {
+			$out[] = array( 'id' => $p->ID, 'title' => self::unpublished_label( $p ) );
+		}
+		return $out;
+	}
+
+	/** "Members (in Trash — content hidden)" */
+	public static function unpublished_label( $post ) {
+		$title  = $post->post_title ? $post->post_title : '#' . $post->ID;
+		$status = 'trash' === $post->post_status ? __( 'in Trash', 'visigate' ) : __( 'not published', 'visigate' );
+		/* translators: 1: rule set title, 2: "in Trash" or "not published". */
+		return sprintf( __( '%1$s (%2$s — content hidden)', 'visigate' ), $title, $status );
+	}
+
 	/* ---------------------------- Meta box ---------------------------- */
 
 	public static function add_metabox() {

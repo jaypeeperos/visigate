@@ -138,6 +138,7 @@ class Visigate_Admin {
 			'groups'     => Visigate_Conditions::groups(),
 			'options'    => Visigate_Conditions::options(),
 			'sets'       => Visigate_Ruleset::all_sets(),
+			'otherSets'  => Visigate_Ruleset::unpublished_sets(),
 			'isPro'      => visigate_is_pro(),
 			'teasers'    => class_exists( 'Visigate_Pro_Conditions' ) ? array() : Visigate_Conditions::teasers(),
 			'upgradeUrl' => esc_url_raw( (string) apply_filters( 'visigate_upgrade_url', 'https://persjay.com/plugins/visigate/#pricing' ) ),
@@ -149,8 +150,8 @@ class Visigate_Admin {
 	}
 
 	private static function enqueue_builder() {
-		wp_enqueue_style( 'visigate-builder', VISIGATE_URL . 'assets/css/builder.css', array( 'wp-components' ), VISIGATE_VERSION );
-		wp_enqueue_script( 'visigate-builder', VISIGATE_URL . 'assets/js/builder.js', array( 'wp-element', 'wp-components', 'wp-i18n', 'wp-api-fetch', 'wp-hooks' ), VISIGATE_VERSION, true );
+		wp_enqueue_style( 'visigate-builder', VISIGATE_URL . 'assets/css/builder.css', array( 'wp-components' ), self::asset_version( 'assets/css/builder.css' ) );
+		wp_enqueue_script( 'visigate-builder', VISIGATE_URL . 'assets/js/builder.js', array( 'wp-element', 'wp-components', 'wp-i18n', 'wp-api-fetch', 'wp-hooks' ), self::asset_version( 'assets/js/builder.js' ), true );
 		wp_set_script_translations( 'visigate-builder', 'visigate' );
 		wp_add_inline_script( 'visigate-builder', 'window.VisigateData = ' . wp_json_encode( self::js_data() ) . ';', 'before' );
 	}
@@ -178,7 +179,7 @@ class Visigate_Admin {
 			'visigate-elementor-atomic',
 			VISIGATE_URL . 'assets/js/elementor-atomic.js',
 			array( 'visigate-builder', 'elementor-v2-editor-editing-panel', 'elementor-v2-editor-controls', 'elementor-v2-editor-props' ),
-			VISIGATE_VERSION,
+			self::asset_version( 'assets/js/elementor-atomic.js' ),
 			true
 		);
 		wp_enqueue_style( 'visigate-elementor', VISIGATE_URL . 'assets/css/elementor.css', array( 'visigate-builder' ), self::asset_version( 'assets/css/elementor.css' ) );
@@ -190,7 +191,7 @@ class Visigate_Admin {
 			return;
 		}
 		self::enqueue_builder();
-		wp_enqueue_script( 'visigate-admin', VISIGATE_URL . 'assets/js/admin.js', array( 'visigate-builder' ), VISIGATE_VERSION, true );
+		wp_enqueue_script( 'visigate-admin', VISIGATE_URL . 'assets/js/admin.js', array( 'visigate-builder' ), self::asset_version( 'assets/js/admin.js' ), true );
 		wp_set_script_translations( 'visigate-admin', 'visigate' );
 	}
 

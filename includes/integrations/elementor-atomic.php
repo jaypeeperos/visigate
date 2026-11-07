@@ -28,7 +28,7 @@ add_filter(
 		}
 		require_once __DIR__ . '/class-elementor-atomic-rules-control.php';
 		$options = array( array( 'value' => '', 'label' => __( '— None —', 'visigate' ) ) );
-		foreach ( Visigate_Ruleset::all_sets() as $set ) {
+		foreach ( array_merge( Visigate_Ruleset::all_sets(), Visigate_Ruleset::unpublished_sets() ) as $set ) {
 			$options[] = array( 'value' => (string) $set['id'], 'label' => $set['title'] );
 		}
 		$items = array(

@@ -69,7 +69,7 @@ class Visigate_View_As {
 
 	/** Can the current request use View as? Front end only, for Visigate managers. */
 	private static function applies() {
-		if ( ! self::enabled() || is_admin() || wp_doing_cron() ) {
+		if ( ! self::enabled() || ( is_admin() && ! wp_doing_ajax() ) || wp_doing_cron() ) {
 			return false;
 		}
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended

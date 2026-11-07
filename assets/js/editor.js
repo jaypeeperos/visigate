@@ -47,9 +47,24 @@
 		var setOptions = [ { value: '0', label: __( '— None —', 'visigate' ) } ].concat(
 			( D.sets || [] ).map( function ( s ) { return { value: String( s.id ), label: s.title }; } )
 		);
+		// A saved set that is no longer published (draft, Trash, deleted) hides this content for
+		// everyone. Show it in the list with a warning instead of falling back to "None".
+		var setId = parseInt( a.visigateSet, 10 ) || 0;
+		var setMissing = setId > 0 && ! ( D.sets || [] ).some( function ( s ) { return s.id === setId; } );
+		if ( setMissing ) {
+			var other = ( D.otherSets || [] ).find( function ( s ) { return s.id === setId; } );
+			setOptions.push( {
+				value: String( setId ),
+				/* translators: %d: rule set ID */
+				label: other ? other.title : wp.i18n.sprintf( __( 'Rule set #%d (deleted — content hidden)', 'visigate' ), setId ),
+			} );
+		}
 		// Extension point: add-ons can append controls (e.g. fallback content) to the panel.
 		var extras = wp.hooks.applyFilters( 'visigate.panel.extras', [], props );
 		return el( comp.PanelBody, { title: __( 'Visibility Rules', 'visigate' ), initialOpen: props.isPatternInstance || hasRules( a ), icon: 'visibility' },
+			setMissing ? el( comp.Notice, { status: 'warning', isDismissible: false, className: 'vg-set-missing' },
+				__( 'The saved rule set below is not published, so this content is hidden from everyone. Restore or publish the rule set, or choose another one.', 'visigate' )
+			) : null,
 			el( comp.SelectControl, {
 				label: __( 'Saved rule set', 'visigate' ),
 				value: String( a.visigateSet || 0 ),
@@ -63,7 +78,10 @@
 			el( Builder, {
 				value: a.visigateRules,
 				onChange: function ( v ) {
-					props.setAttributes( { visigateRules: v && v.groups && v.groups.length ? v : undefined } );
+					// Keep a non-default action even before any condition exists, otherwise the
+					// "Hide this content when…" choice is discarded and the select snaps back to "Show".
+					// Rules without groups are ignored at render time, so the content stays visible.
+					props.setAttributes( { visigateRules: v && ( ( v.groups && v.groups.length ) || v.action === 'hide' ) ? v : undefined } );
 				},
 			} ),
 			hasSidebar && ! props.isPatternInstance && ( props.name === 'core/block' || ( a.metadata && a.metadata.patternName ) )

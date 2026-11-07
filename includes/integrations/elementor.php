@@ -90,6 +90,10 @@ add_action(
 		foreach ( Visigate_Ruleset::all_sets() as $set ) {
 			$options[ $set['id'] ] = $set['title'];
 		}
+		// Keep unpublished sets selectable so an element that uses one shows why it is hidden.
+		foreach ( Visigate_Ruleset::unpublished_sets() as $set ) {
+			$options[ $set['id'] ] = $set['title'];
+		}
 
 		$element->start_controls_section(
 			'visigate_section',

@@ -91,8 +91,16 @@ class Visigate_Menus {
 	/* ------------------------------ front end ------------------------------ */
 
 	private static function front_end() {
-		// The Menus screen and the REST API (block editor) must see every item.
-		return ! ( is_admin() || ( defined( 'REST_REQUEST' ) && REST_REQUEST ) );
+		// The Menus screen must see every item. admin-ajax.php is used for front-end content too.
+		if ( is_admin() && ! wp_doing_ajax() ) {
+			return false;
+		}
+		// The block editor reads menus over REST as someone who can edit them. Public REST
+		// endpoints (headless themes, menu API plugins) still get rules applied.
+		if ( defined( 'REST_REQUEST' ) && REST_REQUEST && current_user_can( 'edit_theme_options' ) ) {
+			return false;
+		}
+		return true;
 	}
 
 	/** Remove hidden menu items (and their children) before the menu is built. */

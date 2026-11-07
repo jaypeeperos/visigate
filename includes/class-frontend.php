@@ -12,6 +12,8 @@ class Visigate_Frontend {
 
 	public static function init() {
 		add_filter( 'pre_render_block', array( __CLASS__, 'pre_render' ), 10, 2 );
+		add_filter( 'get_the_excerpt', array( __CLASS__, 'excerpt_start' ), 9, 2 );
+		add_filter( 'get_the_excerpt', array( __CLASS__, 'excerpt_end' ), 11 );
 		add_filter( 'render_block', array( __CLASS__, 'render_block' ), 10, 2 ); // fallback + admin preview
 		add_filter( 'register_block_type_args', array( __CLASS__, 'register_attrs' ) );
 		add_shortcode( 'visigate', array( __CLASS__, 'shortcode' ) );
@@ -32,11 +34,15 @@ class Visigate_Frontend {
 	}
 
 	private static function in_editor_context() {
-		if ( is_admin() ) {
+		// admin-ajax.php counts as admin, but themes and plugins use it to load front-end content
+		// (load more, quick view, popups), so rules still apply there.
+		if ( is_admin() && ! wp_doing_ajax() ) {
 			return true;
 		}
+		// The raw, rule-free markup is only for people who can edit content. Anyone else adding
+		// ?context=edit to a REST request still gets rules applied.
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-		return defined( 'REST_REQUEST' ) && REST_REQUEST && isset( $_GET['context'] ) && 'edit' === $_GET['context'];
+		return defined( 'REST_REQUEST' ) && REST_REQUEST && isset( $_GET['context'] ) && 'edit' === $_GET['context'] && current_user_can( 'edit_posts' );
 	}
 
 	public static function preview_enabled() {
@@ -56,10 +62,63 @@ class Visigate_Frontend {
 	}
 
 	public static function pre_render( $pre, $block ) {
+		// Inside an auto-generated excerpt, blocks nested in a hidden Group/Columns are rendered on
+		// their own (without their hidden parent), so drop them here.
+		if ( null === $pre && self::$excerpt_hidden && isset( self::$excerpt_hidden[ self::block_hash( $block ) ] ) ) {
+			return '';
+		}
 		if ( null !== $pre || ! self::has_rules( $block ) || self::in_editor_context() || self::preview_enabled() ) {
 			return $pre;
 		}
 		return self::block_visible( $block ) ? $pre : self::hidden_block_output( $block );
+	}
+
+	/** Hashes of blocks nested inside hidden blocks, while an excerpt is being generated. */
+	private static $excerpt_hidden = null;
+
+	private static function block_hash( $block ) {
+		return md5( wp_json_encode( $block ) );
+	}
+
+	/**
+	 * Auto-generated excerpts (archives, feeds, SEO descriptions) render the inner blocks of
+	 * Group and Columns blocks directly, skipping the wrapper, so a hidden wrapper would leak its
+	 * text. Before WordPress builds the excerpt, note every block that sits inside a hidden block.
+	 *
+	 * @param string           $text Manual excerpt, or '' when WordPress will generate one.
+	 * @param WP_Post|int|null $post Post the excerpt is for.
+	 */
+	public static function excerpt_start( $text, $post = null ) {
+		self::$excerpt_hidden = null;
+		if ( '' !== trim( (string) $text ) || self::in_editor_context() || self::preview_enabled() ) {
+			return $text;
+		}
+		$post = get_post( $post );
+		if ( ! $post || false === strpos( (string) $post->post_content, 'visigate' ) || ! has_blocks( $post->post_content ) ) {
+			return $text;
+		}
+		$hidden = array();
+		self::collect_hidden( parse_blocks( $post->post_content ), false, $hidden );
+		self::$excerpt_hidden = $hidden ? $hidden : null;
+		return $text;
+	}
+
+	/** Excerpt generated: stop dropping nested blocks. */
+	public static function excerpt_end( $text ) {
+		self::$excerpt_hidden = null;
+		return $text;
+	}
+
+	private static function collect_hidden( $blocks, $under_hidden, &$hidden ) {
+		foreach ( (array) $blocks as $block ) {
+			if ( $under_hidden ) {
+				$hidden[ self::block_hash( $block ) ] = true;
+			}
+			$is_hidden = $under_hidden || ( self::has_rules( $block ) && ! self::block_visible( $block ) );
+			if ( ! empty( $block['innerBlocks'] ) ) {
+				self::collect_hidden( $block['innerBlocks'], $is_hidden, $hidden );
+			}
+		}
 	}
 
 	/**
@@ -145,7 +204,8 @@ class Visigate_Frontend {
 			$conds[] = array( 'type' => 'woo_bought_product', 'op' => 'bought', 'value' => array_map( 'absint', $csv( $a['bought'] ) ), 'days' => (int) $a['bought_days'] );
 		}
 		if ( $conds ) {
-			$rules = array( 'action' => 'yes' === $a['hide'] ? 'hide' : 'show', 'groups' => array( array( 'conditions' => $conds ) ) );
+			$hide  = in_array( strtolower( trim( (string) $a['hide'] ) ), array( 'yes', '1', 'true' ), true );
+			$rules = array( 'action' => $hide ? 'hide' : 'show', 'groups' => array( array( 'conditions' => $conds ) ) );
 			if ( ! Visigate_Engine::visible( $rules ) ) {
 				return self::hidden_shortcode( $atts, $content );
 			}

@@ -21,3 +21,5 @@
 	width: 20px; height: 20px; line-height: 20px; text-align: center; font-size: 13px;
 	background: #2271b1; color: #fff; border-radius: 50%; pointer-events: none;
 }
+
+.vg-set-missing.components-notice{margin:0 0 12px}

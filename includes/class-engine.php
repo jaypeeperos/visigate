@@ -122,18 +122,14 @@ class Visigate_Engine {
 				$hit = in_array( self::device(), (array) $v, true );
 				return ( 'is_any' === $op ) ? $hit : ! $hit;
 
+			// Off singular pages (home, archives, search) no listed post is being viewed, so
+			// "is any of" is false and "is none of" is true.
 			case 'specific_post':
-				if ( ! is_singular() ) {
-					return false;
-				}
-				$post_id = get_queried_object_id();
+				$post_id = is_singular() ? get_queried_object_id() : 0;
 				$hit     = $post_id > 0 && in_array( (string) $post_id, array_map( 'strval', (array) $v ), true );
 				return ( 'is_any' === $op ) ? $hit : ! $hit;
 
 			case 'post_type':
-				if ( ! is_singular() && ! is_post_type_archive() ) {
-					return false;
-				}
 				$post_types = (array) $v;
 				$hit        = $post_types && ( is_singular( $post_types ) || is_post_type_archive( $post_types ) );
 				return ( 'is_any' === $op ) ? $hit : ! $hit;
@@ -157,6 +153,9 @@ class Visigate_Engine {
 				$now = self::now()->getTimestamp();
 				$f   = ! empty( $v['from'] ) ? date_create_immutable( $v['from'], wp_timezone() ) : null;
 				$t   = ! empty( $v['to'] ) ? date_create_immutable( $v['to'], wp_timezone() ) : null;
+				if ( $t && ! empty( $v['to'] ) && 10 === strlen( (string) $v['to'] ) ) {
+					$t = $t->setTime( 23, 59, 59 ); // A date without a time includes that whole day.
+				}
 				$in  = ( ! $f || $now >= $f->getTimestamp() ) && ( ! $t || $now <= $t->getTimestamp() );
 				return ( 'within' === $op ) ? $in : ! $in;
 		}

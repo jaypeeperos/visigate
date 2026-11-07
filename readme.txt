@@ -4,7 +4,7 @@ Tags: conditional content, visibility, elementor, block editor, personalization
 Requires at least: 6.2
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.4.0
+Stable tag: 1.4.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -173,10 +173,25 @@ Yes. Visigate Pro is a separate plugin sold outside WordPress.org. This plugin d
 4. The "Open Visigate" shortcut in Page settings opens the Pattern Visibility sidebar.
 5. Custom rules with AND/OR groups on a classic Elementor element, styled to match Elementor's dark theme.
 6. Visibility rules on an Elementor atomic Flexbox, alongside a saved rule set.
-7. The Rule Sets list, showing each rule's summary and shortcode, with a Duplicate action.
-8. Cache safety, admin preview and developer reference on the settings screen.
+7. The Rule Sets list, showing each rule's summary, where it is used and its shortcode, with Where used and Duplicate actions.
+8. Cache safety, admin preview, View as and developer reference on the settings screen.
+9. The Usage screen lists every pattern, page, navigation menu and menu item that uses a rule set.
+10. View as in the admin bar: preview a page as a logged-out visitor, with hidden content revealed and outlined.
+11. A menu item with a Visigate rule set, so "Log in" shows only to logged-out visitors.
 
 == Changelog ==
+
+= 1.4.1 =
+* Fix: text inside a hidden Group or Columns block no longer appears in automatic excerpts (archive pages, RSS feeds, SEO descriptions).
+* Fix: hidden blocks and menu items stay hidden in content loaded through admin-ajax.php, such as "load more" buttons and quick-view popups.
+* Fix: menu items hidden by a rule set stay hidden in public REST API responses; only users who can edit menus see every item.
+* Fix: adding ?context=edit to a REST request no longer skips visibility rules for visitors who cannot edit content.
+* Fix: "Specific Page or Post is none of" and "Post type is none of" now match on the home page, archives and search results instead of always failing there.
+* Fix: in the block editor, "Hide this content when…" can be chosen before any condition is added; it no longer switches back to "Show".
+* Fix: a date range ending on a date without a time now includes that whole day.
+* Fix: a block, pattern or Elementor element that uses a rule set in the Trash or not yet published no longer shows "None" as its saved rule set. The set is listed with a warning, because the content stays hidden until the set is published again.
+* Improve: the [visigate] shortcode accepts hide="1" and hide="true" as well as hide="yes".
+* Improve: the rule builder's scripts and styles refresh in the browser whenever their files change.
 
 = 1.4.0 =
 * New: rule set usage report. A "Used in" column, a Usage screen and a "Where it's used" box show every page, pattern, template, template part, navigation menu, menu item, widget and Elementor element that uses each rule set.
@@ -226,6 +241,12 @@ Pro conditions moved to the separate Visigate Pro add-on; unknown conditions now
 Initial release.
 
 == Upgrade Notice ==
+
+= 1.4.1 =
+Fixes hidden Group and Columns text showing in automatic excerpts, and hidden content showing in content loaded through admin-ajax.php or public REST requests. Recommended for all sites.
+
+= 1.4.0 =
+Adds a report of where each rule set is used, rule sets for classic menu items, and a View as menu for previewing pages as other visitors. Update before Visigate Pro 1.4.0.
 
 = 1.3.5 =
 Adds custom rules and atomic element support in Elementor, with cache handling for visitor-specific visibility. Removes visibility controls from Post Settings.
