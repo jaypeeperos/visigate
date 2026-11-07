@@ -95,26 +95,27 @@ class Visigate_Engine {
 
 		switch ( $type ) {
 			case 'logged_in':
-				return ( 'is' === $op ) ? is_user_logged_in() : ! is_user_logged_in();
+				$in = Visigate_View_As::logged_in();
+				return ( 'is' === $op ) ? $in : ! $in;
 
 			case 'user_role':
-				$hit = (bool) array_intersect( (array) wp_get_current_user()->roles, array_map( 'strval', (array) $v ) );
+				$hit = (bool) array_intersect( Visigate_View_As::roles(), array_map( 'strval', (array) $v ) );
 				return ( 'is_any' === $op ) ? $hit : ! $hit;
 
 			case 'specific_user':
-				$user_id = get_current_user_id();
+				$user_id = Visigate_View_As::user_id();
 				$hit     = $user_id > 0 && in_array( (string) $user_id, array_map( 'strval', (array) $v ), true );
 				return ( 'is_any' === $op ) ? $hit : ! $hit;
 
 			case 'capability':
-				$has = is_user_logged_in() && current_user_can( sanitize_key( (string) $v ) );
+				$has = Visigate_View_As::logged_in() && Visigate_View_As::can( sanitize_key( (string) $v ) );
 				return ( 'has' === $op ) ? $has : ! $has;
 
 			case 'user_registered':
-				if ( ! is_user_logged_in() ) {
+				if ( ! Visigate_View_As::logged_in() || ! is_user_logged_in() ) {
 					return false;
 				}
-				$age = ( time() - strtotime( wp_get_current_user()->user_registered . ' UTC' ) ) / DAY_IN_SECONDS;
+				$age = ( self::now()->getTimestamp() - strtotime( wp_get_current_user()->user_registered . ' UTC' ) ) / DAY_IN_SECONDS;
 				return ( 'older' === $op ) ? $age > (float) $v : $age < (float) $v;
 
 			case 'device':
@@ -141,11 +142,11 @@ class Visigate_Engine {
 				return ( 'singular' === $op && is_singular() ) || ( 'archive' === $op && is_archive() );
 
 			case 'weekday':
-				$hit = in_array( current_datetime()->format( 'N' ), array_map( 'strval', (array) $v ), true );
+				$hit = in_array( self::now()->format( 'N' ), array_map( 'strval', (array) $v ), true );
 				return ( 'is_any' === $op ) ? $hit : ! $hit;
 
 			case 'time_of_day':
-				$now = current_datetime();
+				$now = self::now();
 				$cur = (int) $now->format( 'G' ) * 60 + (int) $now->format( 'i' );
 				$f   = self::minutes( $v['from'] );
 				$t   = self::minutes( $v['to'] );
@@ -153,7 +154,7 @@ class Visigate_Engine {
 				return ( 'between' === $op ) ? $in : ! $in;
 
 			case 'date_range':
-				$now = current_datetime()->getTimestamp();
+				$now = self::now()->getTimestamp();
 				$f   = ! empty( $v['from'] ) ? date_create_immutable( $v['from'], wp_timezone() ) : null;
 				$t   = ! empty( $v['to'] ) ? date_create_immutable( $v['to'], wp_timezone() ) : null;
 				$in  = ( ! $f || $now >= $f->getTimestamp() ) && ( ! $t || $now <= $t->getTimestamp() );
@@ -164,12 +165,22 @@ class Visigate_Engine {
 		return (bool) apply_filters( 'visigate_check_condition', false, $c );
 	}
 
+	/** Current site time, or the time being previewed with View as. */
+	public static function now() {
+		$sim = Visigate_View_As::now();
+		return $sim ? $sim : current_datetime();
+	}
+
 	private static function minutes( $hhmm ) {
 		$p = explode( ':', (string) $hhmm );
 		return ( (int) $p[0] ) * 60 + (int) ( $p[1] ?? 0 );
 	}
 
 	public static function device() {
+		$sim = Visigate_View_As::device();
+		if ( null !== $sim ) {
+			return $sim;
+		}
 		static $d = null;
 		if ( null !== $d ) {
 			return $d;

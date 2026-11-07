@@ -26,7 +26,7 @@ class Visigate_Admin {
 	}
 
 	public static function opt( $key ) {
-		$defaults = array( 'auto_nocache' => 1, 'admin_preview' => 1 );
+		$defaults = array( 'auto_nocache' => 1, 'admin_preview' => 1, 'view_as' => 1 );
 		$saved    = get_option( self::OPTION, array() );
 		$all      = wp_parse_args( is_array( $saved ) ? $saved : array(), $defaults );
 		return isset( $all[ $key ] ) ? $all[ $key ] : null;
@@ -56,6 +56,7 @@ class Visigate_Admin {
 					return array(
 						'auto_nocache'  => empty( $in['auto_nocache'] ) ? 0 : 1,
 						'admin_preview' => empty( $in['admin_preview'] ) ? 0 : 1,
+						'view_as'       => empty( $in['view_as'] ) ? 0 : 1,
 					);
 				},
 			)
@@ -85,6 +86,15 @@ class Visigate_Admin {
 							<label>
 								<input type="checkbox" name="<?php echo esc_attr( self::OPTION ); ?>[admin_preview]" value="1" <?php checked( self::opt( 'admin_preview' ) ); ?>>
 								<?php esc_html_e( 'Add an admin-bar toggle that reveals hidden content (outlined in red) so you can debug rules.', 'visigate' ); ?>
+							</label>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row"><?php esc_html_e( 'View as', 'visigate' ); ?></th>
+						<td>
+							<label>
+								<input type="checkbox" name="<?php echo esc_attr( self::OPTION ); ?>[view_as]" value="1" <?php checked( self::opt( 'view_as' ) ); ?>>
+								<?php esc_html_e( 'Add a "View as" menu to the admin bar to preview pages as a logged-out visitor, another role or another device, without logging out.', 'visigate' ); ?>
 							</label>
 						</td>
 					</tr>

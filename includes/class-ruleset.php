@@ -102,6 +102,9 @@ class Visigate_Ruleset {
 	/* ---------------------------- List table ---------------------------- */
 
 	public static function row_actions( $actions, $post ) {
+		if ( $post instanceof WP_Post && self::CPT === $post->post_type && 'auto-draft' !== $post->post_status && current_user_can( visigate_capability() ) ) {
+			$actions['visigate_usage'] = sprintf( '<a href="%s">%s</a>', esc_url( Visigate_Usage::usage_url( $post->ID ) ), esc_html__( 'Where used', 'visigate' ) );
+		}
 		if ( self::can_duplicate( $post ) ) {
 			$url = add_query_arg(
 				array( 'action' => 'visigate_duplicate_set', 'post' => $post->ID ),
@@ -159,13 +162,17 @@ class Visigate_Ruleset {
 		return array(
 			'cb'            => $cols['cb'],
 			'title'         => $cols['title'],
-			'visigate_rule' => __( 'Rule', 'visigate' ),
-			'visigate_code' => __( 'Shortcode', 'visigate' ),
+			'visigate_rule'  => __( 'Rule', 'visigate' ),
+			'visigate_usage' => __( 'Used in', 'visigate' ),
+			'visigate_code'  => __( 'Shortcode', 'visigate' ),
 			'date'          => $cols['date'],
 		);
 	}
 
 	public static function column_content( $col, $post_id ) {
+		if ( 'visigate_usage' === $col ) {
+			Visigate_Usage::render_count( $post_id );
+		}
 		if ( 'visigate_code' === $col ) {
 			echo '<code>[visigate set="' . (int) $post_id . '"]</code>';
 		}

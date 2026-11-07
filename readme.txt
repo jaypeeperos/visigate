@@ -4,11 +4,11 @@ Tags: conditional content, visibility, elementor, block editor, personalization
 Requires at least: 6.2
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.3.5
+Stable tag: 1.4.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-Show or hide any block or Elementor element by user, role, login status, device, page type, or time. Visual rule builder. No front-end JavaScript.
+Show or hide any block, Elementor element or menu item by user, role, login status, device, page type, or time. No front-end JavaScript.
 
 == Description ==
 
@@ -37,6 +37,9 @@ https://www.youtube.com/watch?v=SIE5wlU_Eg0
 * **Block editor support:** add a Visibility Rules panel to every block, using a saved rule set or custom rules for that block.
 * **Elementor support:** apply a saved rule set or build custom rules for classic widgets and containers, plus atomic widgets and layouts.
 * **Shortcode and PHP helper:** use rules with other page builders, in classic content, or in theme templates.
+* **Menu item visibility:** use a rule set on any classic menu item, such as hiding "Log in" from logged-in users. Navigation block links use the normal Visibility Rules panel.
+* **Where used:** see every page, pattern, template, menu item, widget and Elementor element that uses a rule set, and get a warning before you trash one that is in use.
+* **View as:** preview any page as a logged-out visitor, another role or another device from the admin bar, without logging out.
 * **Admin preview:** reveal hidden content on the live page, faded and outlined in red, to check your rules.
 * **Cache safety:** pages using specific user, device, or time rules can be flagged automatically so page cache plugins skip them.
 
@@ -142,7 +145,17 @@ Add **Specific users** and search by display name or username. **Is any of** mat
 
 = How can I test a rule? =
 
-While logged in as an administrator, use the Visigate toggle in the admin bar on any front-end page. Hidden content appears faded and outlined in red. Only you see this preview.
+While logged in as an administrator, open **View as** in the admin bar on any front-end page and pick a logged-out visitor, a role or a device. The page reloads as that visitor would see it, while you stay logged in. Choose **Stop viewing as** to go back. **More options…** opens the full View As screen.
+
+You can also use the Visigate toggle in the admin bar to reveal hidden content, faded and outlined in red. The two work together: reveal hidden content while viewing as a visitor to see exactly what they miss. Only you see these previews.
+
+= Can I show or hide menu items? =
+
+Yes. In Appearance → Menus, open a menu item and choose a rule set under "Visigate: visibility". When the rule set hides the item, its sub-items are hidden too. In block themes, select a link inside a Navigation block and use its Visibility Rules panel.
+
+= How do I see where a rule set is used? =
+
+The Rule Sets list has a **Used in** column, and Visigate → Usage lists every rule set. Open one to see each page, post, pattern, template, template part, navigation menu, menu item, widget and Elementor element that uses it. When you trash a rule set that is in use, Visigate asks you to confirm first, because content that uses a missing rule set is hidden. Rule sets used only from PHP, with `visigate_visible()`, cannot be detected.
 
 = What happens when I delete the plugin? =
 
@@ -154,14 +167,22 @@ Yes. Visigate Pro is a separate plugin sold outside WordPress.org. This plugin d
 
 == Screenshots ==
 
-1. The visual rule builder, with AND/OR groups and a plain-English summary.
-2. A close-up of a rule's condition groups and summary.
-3. The Visibility Rules panel in the block editor sidebar.
-4. Applying a saved rule set from Elementor's Advanced tab.
-5. The Rule Sets list, showing each rule's summary and shortcode.
-6. Cache safety, admin preview and developer reference on the settings screen.
+1. The visual rule builder: AND/OR condition groups with a plain-English summary and a ready-to-use shortcode.
+2. The Visibility Rules panel in the block editor, combining a saved rule set with custom rules for one block.
+3. The Pattern Visibility sidebar sets rules on a synced or unsynced pattern placement without editing the pattern.
+4. The "Open Visigate" shortcut in Page settings opens the Pattern Visibility sidebar.
+5. Custom rules with AND/OR groups on a classic Elementor element, styled to match Elementor's dark theme.
+6. Visibility rules on an Elementor atomic Flexbox, alongside a saved rule set.
+7. The Rule Sets list, showing each rule's summary and shortcode, with a Duplicate action.
+8. Cache safety, admin preview and developer reference on the settings screen.
 
 == Changelog ==
+
+= 1.4.0 =
+* New: rule set usage report. A "Used in" column, a Usage screen and a "Where it's used" box show every page, pattern, template, template part, navigation menu, menu item, widget and Elementor element that uses each rule set.
+* New: confirmation before trashing or deleting a rule set that is in use, and a warning when used rule sets are not published.
+* New: menu item visibility. Choose a rule set for any classic menu item; its sub-items are hidden with it.
+* New: "View as" in the admin bar previews pages as a logged-out visitor, another role or another device without logging out. Can be turned off in Settings.
 
 = 1.3.5 =
 * Fix: editor scripts load on WordPress builds that bundle the interface package instead of registering a separate script handle.
