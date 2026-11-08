@@ -14,6 +14,7 @@ class Visigate_Admin {
 		add_action( 'admin_init', array( __CLASS__, 'register_settings' ) );
 		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'enqueue_admin' ) );
 		add_action( 'enqueue_block_editor_assets', array( __CLASS__, 'enqueue_editor' ) );
+		add_action( 'enqueue_block_assets', array( __CLASS__, 'enqueue_canvas' ) );
 		add_action( 'elementor/editor/after_enqueue_scripts', array( __CLASS__, 'enqueue_elementor' ) );
 		add_action( 'elementor/editor/scripts/enqueue', array( __CLASS__, 'enqueue_elementor' ) );
 		add_action( 'elementor/editor/v2/scripts/enqueue', array( __CLASS__, 'enqueue_elementor_atomic' ) );
@@ -193,6 +194,17 @@ class Visigate_Admin {
 		self::enqueue_builder();
 		wp_enqueue_script( 'visigate-admin', VISIGATE_URL . 'assets/js/admin.js', array( 'visigate-builder' ), self::asset_version( 'assets/js/admin.js' ), true );
 		wp_set_script_translations( 'visigate-admin', 'visigate' );
+	}
+
+	/**
+	 * Canvas cues (rule badges) must load inside the editor iframe. enqueue_block_assets also
+	 * runs on the front end, so only load it in admin, where the editor lives.
+	 */
+	public static function enqueue_canvas() {
+		if ( ! is_admin() ) {
+			return;
+		}
+		wp_enqueue_style( 'visigate-editor-canvas', VISIGATE_URL . 'assets/css/editor-canvas.css', array( 'dashicons' ), self::asset_version( 'assets/css/editor-canvas.css' ) );
 	}
 
 	public static function enqueue_editor() {

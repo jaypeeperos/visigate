@@ -4,7 +4,7 @@ Tags: conditional content, visibility, elementor, block editor, personalization
 Requires at least: 6.2
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.4.1
+Stable tag: 1.4.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -181,6 +181,11 @@ Yes. Visigate Pro is a separate plugin sold outside WordPress.org. This plugin d
 
 == Changelog ==
 
+= 1.4.2 =
+* New: the Visibility Rules panel shows when WordPress's own "Hide" setting hides a block for everyone or on some devices (mobile, tablet or desktop), with a one-click way to show it again.
+* New: blocks hidden by WordPress's "Hide" setting get their own badge in the editor, with a tooltip naming the hidden devices.
+* Fix: the editor badge and outline for blocks with visibility rules now appear in the block editor on WordPress 7.0 and newer.
+
 = 1.4.1 =
 * Fix: text inside a hidden Group or Columns block no longer appears in automatic excerpts (archive pages, RSS feeds, SEO descriptions).
 * Fix: hidden blocks and menu items stay hidden in content loaded through admin-ajax.php, such as "load more" buttons and quick-view popups.
@@ -241,6 +246,9 @@ Pro conditions moved to the separate Visigate Pro add-on; unknown conditions now
 Initial release.
 
 == Upgrade Notice ==
+
+= 1.4.2 =
+Shows WordPress's built-in block hiding alongside Visigate rules in the block editor, and restores the editor badges for blocks with rules.
 
 = 1.4.1 =
 Fixes hidden Group and Columns text showing in automatic excerpts, and hidden content showing in content loaded through admin-ajax.php or public REST requests. Recommended for all sites.

@@ -14,12 +14,6 @@
 .block-editor-block-inspector .vg-builder { max-width: none; }
 .block-editor-block-inspector .vg-pair { grid-template-columns: 1fr; }
 
-/* Editor canvas cue for blocks that have rules */
-.visigate-has-rules { outline: 1px dashed #2271b1; outline-offset: 2px; position: relative; }
-.visigate-has-rules::after {
-	content: "\f177"; font-family: dashicons; position: absolute; top: -10px; right: -10px; z-index: 5;
-	width: 20px; height: 20px; line-height: 20px; text-align: center; font-size: 13px;
-	background: #2271b1; color: #fff; border-radius: 50%; pointer-events: none;
-}
-
 .vg-set-missing.components-notice{margin:0 0 12px}
+.vg-core-hidden.components-notice{margin:0 0 12px}
+.vg-core-hidden.components-notice p{margin:0 0 4px}

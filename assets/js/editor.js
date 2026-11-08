@@ -32,6 +32,61 @@
 		return !! ( a && ( a.visigateSet || ( a.visigateRules && a.visigateRules.groups && a.visigateRules.groups.length ) ) );
 	}
 
+	// WordPress core block visibility (6.9+: metadata.blockVisibility === false hides the block
+	// everywhere; 7.0+: metadata.blockVisibility.viewport.{mobile,tablet,desktop} === false hides
+	// it on that device). Visigate only reads it so editors see one complete picture.
+	var VIEWPORTS = [ 'mobile', 'tablet', 'desktop' ];
+
+	function viewportLabel( key ) {
+		return { mobile: __( 'mobile', 'visigate' ), tablet: __( 'tablet', 'visigate' ), desktop: __( 'desktop', 'visigate' ) }[ key ] || key;
+	}
+
+	/** Returns null, { all: true }, or { all: false, viewports: [ 'mobile', … ] }. */
+	function coreHidden( a ) {
+		var v = a && a.metadata ? a.metadata.blockVisibility : undefined;
+		if ( v === false ) {
+			return { all: true, viewports: [] };
+		}
+		if ( ! v || typeof v !== 'object' || ! v.viewport || typeof v.viewport !== 'object' ) {
+			return null;
+		}
+		var hidden = VIEWPORTS.filter( function ( key ) { return v.viewport[ key ] === false; } );
+		if ( ! hidden.length ) {
+			return null;
+		}
+		return { all: hidden.length === VIEWPORTS.length, viewports: hidden };
+	}
+
+	function coreHiddenText( state ) {
+		return state.all
+			? __( 'Hidden for everyone by the WordPress "Hide" setting.', 'visigate' )
+			/* translators: %s: comma-separated list of devices, e.g. "mobile, tablet" */
+			: wp.i18n.sprintf( __( 'Hidden by WordPress on %s.', 'visigate' ), state.viewports.map( viewportLabel ).join( ', ' ) );
+	}
+
+	/** Metadata with WordPress block visibility removed (undefined when nothing else is left). */
+	function withoutCoreVisibility( metadata ) {
+		var next = Object.assign( {}, metadata );
+		delete next.blockVisibility;
+		return Object.keys( next ).length ? next : undefined;
+	}
+
+	function CoreVisibilityNotice( props ) {
+		var state = coreHidden( props.attributes );
+		if ( ! state ) {
+			return null;
+		}
+		return el( comp.Notice, { status: state.all ? 'warning' : 'info', isDismissible: false, className: 'vg-core-hidden' },
+			el( 'p', null, coreHiddenText( state ), ' ', state.all
+				? __( 'Visibility rules below have no effect until the block is shown again.', 'visigate' )
+				: __( 'On other devices, these rules decide who sees it. Both must allow the block to show.', 'visigate' ) ),
+			el( comp.Button, {
+				variant: 'link',
+				onClick: function () { props.setAttributes( { metadata: withoutCoreVisibility( props.attributes.metadata ) } ); },
+			}, state.all ? __( 'Show block again', 'visigate' ) : __( 'Show on all devices', 'visigate' ) )
+		);
+	}
+
 	// 1. Register attributes on every block (persisted in the block comment delimiter).
 	addFilter( 'blocks.registerBlockType', 'visigate/attributes', function ( settings ) {
 		settings.attributes = Object.assign( {}, settings.attributes, {
@@ -61,7 +116,8 @@
 		}
 		// Extension point: add-ons can append controls (e.g. fallback content) to the panel.
 		var extras = wp.hooks.applyFilters( 'visigate.panel.extras', [], props );
-		return el( comp.PanelBody, { title: __( 'Visibility Rules', 'visigate' ), initialOpen: props.isPatternInstance || hasRules( a ), icon: 'visibility' },
+		return el( comp.PanelBody, { title: __( 'Visibility Rules', 'visigate' ), initialOpen: props.isPatternInstance || hasRules( a ) || !! coreHidden( a ), icon: 'visibility' },
+			el( CoreVisibilityNotice, { attributes: a, setAttributes: props.setAttributes } ),
 			setMissing ? el( comp.Notice, { status: 'warning', isDismissible: false, className: 'vg-set-missing' },
 				__( 'The saved rule set below is not published, so this content is hidden from everyone. Restore or publish the rule set, or choose another one.', 'visigate' )
 			) : null,
@@ -202,8 +258,23 @@
 	// 3. Visual cue in the editor canvas for blocks that carry rules.
 	addFilter( 'editor.BlockListBlock', 'visigate/indicator', createHOC( function ( BlockListBlock ) {
 		return function ( props ) {
+			var classes = [];
 			if ( hasRules( props.attributes ) ) {
-				props = Object.assign( {}, props, { className: ( props.className ? props.className + ' ' : '' ) + 'visigate-has-rules' } );
+				classes.push( 'visigate-has-rules' );
+			}
+			var core = coreHidden( props.attributes );
+			if ( core ) {
+				classes.push( 'visigate-core-hidden' );
+			}
+			if ( classes.length ) {
+				var wrapperProps = props.wrapperProps;
+				if ( core ) {
+					wrapperProps = Object.assign( {}, wrapperProps, { title: coreHiddenText( core ) } );
+				}
+				props = Object.assign( {}, props, {
+					className: ( props.className ? props.className + ' ' : '' ) + classes.join( ' ' ),
+					wrapperProps: wrapperProps,
+				} );
 			}
 			return el( BlockListBlock, props );
 		};
