@@ -4,7 +4,7 @@ Tags: conditional content, visibility, elementor, block editor, personalization
 Requires at least: 6.2
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.4.2
+Stable tag: 1.5.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -37,16 +37,16 @@ https://www.youtube.com/watch?v=SIE5wlU_Eg0
 * **Block editor support:** add a Visibility Rules panel to every block, using a saved rule set or custom rules for that block.
 * **Elementor support:** apply a saved rule set or build custom rules for classic widgets and containers, plus atomic widgets and layouts.
 * **Shortcode and PHP helper:** use rules with other page builders, in classic content, or in theme templates.
-* **Menu item visibility:** use a rule set on any classic menu item, such as hiding "Log in" from logged-in users. Navigation block links use the normal Visibility Rules panel.
+* **Menu item visibility:** use a saved rule set or custom conditions on any classic menu item, such as hiding "Log in" from logged-in users. Navigation block links use the normal Visibility Rules panel.
 * **Where used:** see every page, pattern, template, menu item, widget and Elementor element that uses a rule set, and get a warning before you trash one that is in use.
 * **View as:** preview any page as a logged-out visitor, another role or another device from the admin bar, without logging out.
 * **Admin preview:** reveal hidden content on the live page, faded and outlined in red, to check your rules.
-* **Cache safety:** pages using specific user, device, or time rules can be flagged automatically so page cache plugins skip them.
+* **Cache safety:** pages using specific user, device, URL parameter, cookie, referrer, or time rules can be flagged automatically so page cache plugins skip them.
 
 = Included conditions =
 
 * **User:** login status, user role, specific users, user capability, account age
-* **Visitor:** device type (desktop, tablet, mobile)
+* **Visitor:** device type (desktop, tablet, mobile), URL parameter, cookie, referrer
 * **Page location:** specific pages or posts, post type, and page view (singular or archive)
 * **Time:** day of week, time of day, date range
 
@@ -86,7 +86,7 @@ JavaScript filters: `visigate.builder.extras`, `visigate.panel.extras`.
 
 = Visigate Pro =
 
-Visigate is fully usable on its own. [Visigate Pro](https://persjay.com/plugins/visigate/) is an optional paid add-on that adds more conditions, including country, URL parameter, cookie, referrer, user meta and WooCommerce rules.
+Visigate is fully usable on its own. [Visigate Pro](https://persjay.com/plugins/visigate/) is an optional paid add-on that adds more conditions, including country, ACF/post-meta, user meta and advanced WooCommerce rules, plus fallback content and agency tools. URL parameter, cookie and referrer rules are included in the free plugin.
 
 == Installation ==
 
@@ -151,7 +151,7 @@ You can also use the Visigate toggle in the admin bar to reveal hidden content, 
 
 = Can I show or hide menu items? =
 
-Yes. In Appearance → Menus, open a menu item and choose a rule set under "Visigate: visibility". When the rule set hides the item, its sub-items are hidden too. In block themes, select a link inside a Navigation block and use its Visibility Rules panel.
+Yes. In Appearance → Menus, open a menu item and choose a saved rule set or "Custom conditions" under "Visigate: visibility". Custom conditions use the same visual builder, including Show/Hide actions and AND/OR groups. When visibility rules hide the item, its sub-items are hidden too. In block themes, select a link inside a Navigation block and use its Visibility Rules panel.
 
 = How do I see where a rule set is used? =
 
@@ -180,6 +180,13 @@ Yes. Visigate Pro is a separate plugin sold outside WordPress.org. This plugin d
 11. A menu item with a Visigate rule set, so "Log in" shows only to logged-out visitors.
 
 == Changelog ==
+
+= 1.5.0 =
+* New: classic menu items can use custom conditions directly, alongside the saved rule set option. Includes Show/Hide actions, AND/OR groups, admin preview and Pro menu fallbacks.
+* New: URL parameter, cookie and referrer conditions are now free, including all existing operators. Saved rules continue working without Pro.
+* Compatibility: these conditions remain editable with older Pro add-ons and retain visitor-specific cache protection.
+* Improved: a cleaner menu item visibility panel with help that matches the chosen option, an "Edit rule set" link, and a badge on each menu item showing its visibility at a glance.
+* Fixed: a malformed URL parameter or cookie rule in block markup no longer causes a PHP error.
 
 = 1.4.2 =
 * New: the Visibility Rules panel shows when WordPress's own "Hide" setting hides a block for everyone or on some devices (mobile, tablet or desktop), with a one-click way to show it again.

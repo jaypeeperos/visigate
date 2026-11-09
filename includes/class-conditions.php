@@ -70,10 +70,9 @@ class Visigate_Conditions {
 	public static function teasers() {
 		$t = array(
 			array( 'label' => __( 'Country', 'visigate' ), 'group' => 'visitor' ),
-			array( 'label' => __( 'URL parameter', 'visigate' ), 'group' => 'visitor' ),
-			array( 'label' => __( 'Cookie', 'visigate' ), 'group' => 'visitor' ),
-			array( 'label' => __( 'Referrer', 'visigate' ), 'group' => 'visitor' ),
 			array( 'label' => __( 'User meta', 'visigate' ), 'group' => 'user' ),
+			array( 'label' => __( 'Post meta', 'visigate' ), 'group' => 'location' ),
+			array( 'label' => __( 'ACF field', 'visigate' ), 'group' => 'location' ),
 		);
 		if ( class_exists( 'WooCommerce' ) ) {
 			$woo = array(
@@ -106,6 +105,15 @@ class Visigate_Conditions {
 			'is_none' => __( 'is none of', 'visigate' ),
 		);
 
+		$str = array(
+			'equals'     => __( 'equals', 'visigate' ),
+			'not_equals' => __( 'does not equal', 'visigate' ),
+			'contains'   => __( 'contains', 'visigate' ),
+			'exists'     => __( 'exists', 'visigate' ),
+			'not_exists' => __( 'does not exist', 'visigate' ),
+		);
+		$nv  = array( 'exists', 'not_exists' );
+
 		$defs = array(
 			// ---- User -------------------------------------------------------
 			'logged_in'        => array(
@@ -131,6 +139,20 @@ class Visigate_Conditions {
 			// ---- Visitor ----------------------------------------------------
 			'device'           => array(
 				'label' => __( 'Device type', 'visigate' ), 'group' => 'visitor', 'input' => 'tokens', 'options' => 'devices', 'ops' => $in, 'dynamic' => true,
+			),
+
+			'url_param'           => array(
+				'label' => __( 'URL parameter', 'visigate' ), 'group' => 'visitor', 'input' => 'kv', 'dynamic' => true,
+				'ops' => $str, 'no_value' => $nv, 'key_label' => __( 'Parameter', 'visigate' ),
+			),
+			'cookie'              => array(
+				'label' => __( 'Cookie', 'visigate' ), 'group' => 'visitor', 'input' => 'kv', 'dynamic' => true,
+				'ops' => $str, 'no_value' => $nv, 'key_label' => __( 'Cookie name', 'visigate' ),
+			),
+			'referrer'            => array(
+				'label' => __( 'Referrer', 'visigate' ), 'group' => 'visitor', 'input' => 'text', 'dynamic' => true,
+				'ops' => array( 'contains' => __( 'contains', 'visigate' ), 'not_contains' => __( 'does not contain', 'visigate' ) ),
+				'placeholder' => 'google.com',
 			),
 
 			// ---- Page location ----------------------------------------------
@@ -171,6 +193,12 @@ class Visigate_Conditions {
 					'locked' => false, 'lock_label' => '',
 				)
 			);
+			// Older Pro add-ons may still register these now-free conditions.
+			if ( in_array( $key, array( 'url_param', 'cookie', 'referrer' ), true ) ) {
+				$d['pro'] = false;
+				$d['locked'] = false;
+				$d['dynamic'] = true;
+			}
 			$d['default_op'] = key( $d['ops'] );
 		}
 		unset( $d );

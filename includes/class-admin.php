@@ -187,6 +187,12 @@ class Visigate_Admin {
 	}
 
 	public static function enqueue_admin( $hook ) {
+		if ( 'nav-menus.php' === $hook && current_user_can( visigate_capability() ) ) {
+			self::enqueue_builder();
+			wp_enqueue_style( 'visigate-menus', VISIGATE_URL . 'assets/css/menus.css', array( 'visigate-builder' ), self::asset_version( 'assets/css/menus.css' ) );
+			wp_enqueue_script( 'visigate-menus', VISIGATE_URL . 'assets/js/menus.js', array( 'visigate-builder' ), self::asset_version( 'assets/js/menus.js' ), true );
+			return;
+		}
 		$screen = get_current_screen();
 		if ( ! $screen || Visigate_Ruleset::CPT !== $screen->post_type || ! in_array( $hook, array( 'post.php', 'post-new.php' ), true ) ) {
 			return;

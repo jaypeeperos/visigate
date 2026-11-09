@@ -84,8 +84,10 @@ namespace {
 		const CPT = 'visigate_set';
 		const META = '_rules';
 		public static function all_sets() { return array(); }
+		public static function unpublished_sets() { return array(); }
 	}
 	class Visigate_Admin { public static function opt( $key ) { return false; } }
+	class Visigate_View_As { public static function logged_in() { return is_user_logged_in(); } }
 	class Visigate_Frontend { public static function preview_enabled() { return $GLOBALS['preview']; } }
 	function check( $condition, $message ) { if ( ! $condition ) { throw new \Exception( $message ); } }
 	function rules( $op, $action = 'show' ) {

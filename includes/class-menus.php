@@ -4,7 +4,7 @@ defined( 'ABSPATH' ) || exit;
 /**
  * Menu item visibility for classic menus (Appearance → Menus).
  *
- * Each menu item can use a saved rule set. Items the rule set hides are removed on the server,
+ * Each menu item can use a saved rule set or custom conditions. Hidden items are removed on the server,
  * together with their child items, before the menu is printed. Navigation block links use the
  * normal block Visibility Rules panel instead.
  *
@@ -13,6 +13,7 @@ defined( 'ABSPATH' ) || exit;
 class Visigate_Menus {
 
 	const META = '_visigate_set';
+	const RULES_META = '_visigate_rules';
 
 	public static function init() {
 		add_action( 'wp_nav_menu_item_custom_fields', array( __CLASS__, 'render_fields' ), 10, 2 );
@@ -25,17 +26,23 @@ class Visigate_Menus {
 		return (int) get_post_meta( (int) $item_id, self::META, true );
 	}
 
+	public static function get_rules( $item_id ) {
+		$rules = get_post_meta( (int) $item_id, self::RULES_META, true );
+		return is_array( $rules ) ? $rules : array();
+	}
+
 	/* ------------------------------- admin ------------------------------- */
 
 	public static function render_fields( $item_id, $item ) {
 		$current = self::get_set( $item_id );
+		$rules   = self::get_rules( $item_id );
+		$custom  = ! $current && ! empty( $rules );
 		$brand   = visigate_brand();
-		echo '<div class="visigate-menu-fields description description-wide" style="margin:8px 0;padding:8px 10px;background:#f6f7f7;border-left:3px solid #2271b1">';
 		if ( ! current_user_can( visigate_capability() ) ) {
-			echo '<p style="margin:0">' . esc_html(
-				$current
+			echo '<div class="visigate-menu-fields description description-wide" style="margin:8px 0;padding:8px 10px;background:#f6f7f7;border-left:3px solid #2271b1"><p style="margin:0">' . esc_html(
+				( $current || $rules )
 					/* translators: %s: plugin name. */
-					? sprintf( __( '%s: this item uses a visibility rule set managed by your administrator.', 'visigate' ), $brand )
+					? sprintf( __( '%s: this item has visibility rules managed by your administrator.', 'visigate' ), $brand )
 					/* translators: %s: plugin name. */
 					: sprintf( __( '%s: visibility rules are managed by your administrator.', 'visigate' ), $brand )
 			) . '</p></div>';
@@ -52,18 +59,40 @@ class Visigate_Menus {
 			);
 		}
 		$field = 'visigate-menu-set-' . (int) $item_id;
+		$mode  = $custom ? 'custom' : ( $current ? 'set' : 'always' );
+		$edit  = admin_url( 'post.php?action=edit&post=' );
+		echo '<div class="visigate-menu-fields description description-wide" data-mode="' . esc_attr( $mode ) . '" data-edit-url="' . esc_url( $edit ) . '">';
 		?>
-		<label for="<?php echo esc_attr( $field ); ?>">
-			<?php /* translators: %s: plugin name. */ echo esc_html( sprintf( __( '%s: visibility', 'visigate' ), $brand ) ); ?><br>
-			<select id="<?php echo esc_attr( $field ); ?>" class="widefat" name="visigate_menu_set[<?php echo (int) $item_id; ?>]">
-				<option value="0"><?php esc_html_e( 'Always show (no rule set)', 'visigate' ); ?></option>
-				<?php foreach ( $sets as $set ) : ?>
-					<option value="<?php echo (int) $set['id']; ?>" <?php selected( $current, (int) $set['id'] ); ?>><?php echo esc_html( $set['title'] ); ?></option>
-				<?php endforeach; ?>
-			</select>
-		</label>
-		<span class="description" style="display:block;margin-top:4px"><?php esc_html_e( 'The item shows only when this rule set allows it. Its sub-items are hidden with it.', 'visigate' ); ?>
-			<a href="<?php echo esc_url( admin_url( 'post-new.php?post_type=' . Visigate_Ruleset::CPT ) ); ?>" target="_blank" rel="noopener"><?php esc_html_e( 'Create a rule set', 'visigate' ); ?></a></span>
+		<div class="visigate-menu-head">
+			<label for="<?php echo esc_attr( $field ); ?>" class="visigate-menu-label"><?php esc_html_e( 'Visibility', 'visigate' ); ?></label>
+			<span class="visigate-menu-brand"><?php echo esc_html( $brand ); ?></span>
+		</div>
+		<select id="<?php echo esc_attr( $field ); ?>" class="widefat visigate-menu-mode" name="visigate_menu_set[<?php echo (int) $item_id; ?>]">
+			<option value="0"><?php esc_html_e( 'Always show', 'visigate' ); ?></option>
+			<option value="-1" <?php selected( $custom ); ?>><?php esc_html_e( 'Custom conditions', 'visigate' ); ?></option>
+			<?php if ( $sets ) : ?>
+				<optgroup label="<?php esc_attr_e( 'Saved rule sets', 'visigate' ); ?>">
+					<?php foreach ( $sets as $set ) : ?>
+						<option value="<?php echo (int) $set['id']; ?>" <?php selected( $current, (int) $set['id'] ); ?>><?php echo esc_html( $set['title'] ); ?></option>
+					<?php endforeach; ?>
+				</optgroup>
+			<?php endif; ?>
+		</select>
+		<div class="visigate-menu-custom" <?php echo $custom ? '' : 'hidden'; ?>>
+			<input type="hidden" class="visigate-menu-rules-json" name="visigate_menu_rules[<?php echo (int) $item_id; ?>]" value="<?php echo esc_attr( wp_json_encode( $rules ) ); ?>">
+			<div class="visigate-menu-builder"></div>
+		</div>
+		<p class="visigate-menu-help" data-for="always" <?php echo 'always' === $mode ? '' : 'hidden'; ?>>
+			<?php esc_html_e( 'Everyone sees this item. Pick custom conditions or a saved rule set to limit who sees it.', 'visigate' ); ?>
+			<a href="<?php echo esc_url( admin_url( 'post-new.php?post_type=' . Visigate_Ruleset::CPT ) ); ?>" target="_blank" rel="noopener"><?php esc_html_e( 'Create a rule set', 'visigate' ); ?></a>
+		</p>
+		<p class="visigate-menu-help" data-for="custom" <?php echo 'custom' === $mode ? '' : 'hidden'; ?>>
+			<?php esc_html_e( 'Applies to this item only. Sub-items are hidden with it.', 'visigate' ); ?>
+		</p>
+		<p class="visigate-menu-help" data-for="set" <?php echo 'set' === $mode ? '' : 'hidden'; ?>>
+			<?php esc_html_e( 'Uses the saved rule set, so changes to it apply everywhere it is used. Sub-items are hidden with it.', 'visigate' ); ?>
+			<a class="visigate-menu-edit-set" href="<?php echo esc_url( $current ? $edit . $current : $edit ); ?>" target="_blank" rel="noopener"><?php esc_html_e( 'Edit rule set', 'visigate' ); ?></a>
+		</p>
 		<?php
 		do_action( 'visigate_menu_item_fields', $item_id, $item, $current );
 		echo '</div>';
@@ -79,7 +108,24 @@ class Visigate_Menus {
 		if ( ! wp_verify_nonce( $nonce, 'update-nav_menu' ) || ! current_user_can( visigate_capability() ) || ! current_user_can( 'edit_theme_options' ) ) {
 			return;
 		}
-		$set = absint( wp_unslash( $_POST['visigate_menu_set'][ $item_id ] ) );
+		$selection = wp_unslash( $_POST['visigate_menu_set'][ $item_id ] );
+		if ( ! is_scalar( $selection ) ) {
+			return;
+		}
+		$set = absint( $selection );
+		if ( '-1' === (string) $selection ) {
+			// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Verified above.
+			$json = $_POST['visigate_menu_rules'][ $item_id ] ?? null;
+			$rules = is_string( $json ) ? json_decode( wp_unslash( $json ), true ) : null;
+			if ( ! is_array( $rules ) || ! isset( $rules['groups'] ) || ! is_array( $rules['groups'] ) ) {
+				return; // A missing or malformed builder payload must not erase saved visibility.
+			}
+			// update_post_meta() unslashes its value, so slash it to keep backslashes in cookie or URL values.
+			update_post_meta( $item_id, self::RULES_META, wp_slash( Visigate_Conditions::sanitize( $rules ) ) );
+			$set = 0;
+		} else {
+			delete_post_meta( $item_id, self::RULES_META );
+		}
 		if ( $set ) {
 			update_post_meta( $item_id, self::META, $set );
 		} else {
@@ -114,7 +160,8 @@ class Visigate_Menus {
 
 		foreach ( $items as $i => $item ) {
 			$set = isset( $item->ID ) ? self::get_set( $item->ID ) : 0;
-			if ( ! $set || Visigate_Engine::set_visible( $set ) ) {
+			$rules = isset( $item->ID ) ? self::get_rules( $item->ID ) : array();
+			if ( $set ? Visigate_Engine::set_visible( $set ) : Visigate_Engine::visible( $rules ) ) {
 				continue;
 			}
 			if ( $preview ) {

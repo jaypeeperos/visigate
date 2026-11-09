@@ -36,6 +36,7 @@ function wp_add_inline_script( $handle, $script, $position ) {}
 class Visigate_Ruleset {
 	const CPT = 'visigate_set';
 	public static function all_sets() { return array(); }
+	public static function unpublished_sets() { return array(); }
 }
 class Visigate_Conditions {
 	public static function all() { return array(); }

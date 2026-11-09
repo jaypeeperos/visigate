@@ -1,0 +1,62 @@
+/* Visigate — classic menu items (Appearance → Menus). Admin only. */
+.visigate-menu-fields {
+	margin: 12px 0 8px;
+	padding: 10px 12px 12px;
+	border: 1px solid #dcdcde;
+	border-radius: 4px;
+	background: #fff;
+	color: #1d2327;
+	box-sizing: border-box;
+}
+.visigate-menu-fields[data-mode="custom"],
+.visigate-menu-fields[data-mode="set"] { border-color: #2271b1; box-shadow: inset 3px 0 0 #2271b1; }
+
+.visigate-menu-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; margin-bottom: 6px; }
+.visigate-menu-label { font-weight: 600; font-size: 13px; }
+.visigate-menu-brand { font-size: 11px; color: #646970; }
+
+.visigate-menu-fields .visigate-menu-mode { margin: 0; max-width: none; }
+.visigate-menu-custom { margin-top: 10px; }
+.visigate-menu-custom[hidden], .visigate-menu-help[hidden] { display: none; }
+.visigate-menu-help { margin: 8px 0 0; font-size: 12px; line-height: 1.5; color: #646970; font-style: normal; }
+
+/* Flatter builder in the narrow menu column: one frame per OR group, no nested grey boxes. */
+.visigate-menu-fields .vg-builder { gap: 8px; max-width: none; }
+.visigate-menu-fields .vg-builder select,
+.visigate-menu-fields .vg-builder input[type="text"],
+.visigate-menu-fields .vg-builder input[type="number"] { max-width: none; }
+.visigate-menu-fields .vg-group { padding: 8px; gap: 8px; border: 1px solid #dcdcde; border-radius: 4px; background: #f6f7f7; }
+.visigate-menu-fields .vg-cond { padding: 0; gap: 6px; background: transparent; }
+.visigate-menu-fields .vg-and,
+.visigate-menu-fields .vg-or { margin: -2px 0; font-size: 10px; }
+.visigate-menu-fields .vg-cond__top .components-button.is-destructive { flex: 0 0 auto; min-width: 30px; }
+.visigate-menu-fields .vg-group > .components-button { align-self: flex-start; padding-left: 0; }
+
+/* Both "add" actions read as the same kind of control. */
+.visigate-menu-fields .vg-builder > .components-button.is-secondary {
+	justify-content: center;
+	border: 1px dashed #8c8f94;
+	box-shadow: none;
+	color: #2271b1;
+	background: transparent;
+}
+.visigate-menu-fields .vg-builder > .components-button.is-secondary:hover { border-color: #2271b1; background: #f0f6fc; }
+.visigate-menu-fields .vg-summary { margin: 0; padding: 6px 8px; font-size: 12px; }
+
+/* Status badge in the collapsed item bar. */
+.visigate-menu-badge {
+	display: inline-block;
+	max-width: 140px;
+	margin-right: 8px;
+	padding: 1px 6px;
+	overflow: hidden;
+	border-radius: 2px;
+	background: #f0f6fc;
+	color: #2271b1;
+	font-size: 11px;
+	line-height: 18px;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	vertical-align: middle;
+}
+.visigate-menu-badge--warn { background: #fcf0f1; color: #b32d2e; }

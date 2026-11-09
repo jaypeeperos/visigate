@@ -118,6 +118,33 @@ class Visigate_Engine {
 				$age = ( self::now()->getTimestamp() - strtotime( wp_get_current_user()->user_registered . ' UTC' ) ) / DAY_IN_SECONDS;
 				return ( 'older' === $op ) ? $age > (float) $v : $age < (float) $v;
 
+			case 'url_param':
+				// Block attributes are not sanitized before rendering, so never trust the key's type.
+				$key = self::kv_part( $v, 'key' );
+				// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+				$raw = '' !== $key && isset( $_GET[ $key ] ) && is_scalar( $_GET[ $key ] ) ? sanitize_text_field( wp_unslash( (string) $_GET[ $key ] ) ) : null;
+				return self::string_check( $raw, $op, self::kv_part( $v, 'value' ) );
+
+			case 'cookie':
+				$key = self::kv_part( $v, 'key' );
+				$raw = '' !== $key && class_exists( 'Visigate_Pro_View_As' ) ? Visigate_Pro_View_As::cookie( $key ) : null;
+				if ( null === $raw ) {
+					$raw = '' !== $key && isset( $_COOKIE[ $key ] ) && is_scalar( $_COOKIE[ $key ] ) ? sanitize_text_field( wp_unslash( (string) $_COOKIE[ $key ] ) ) : null;
+				}
+				return self::string_check( $raw, $op, self::kv_part( $v, 'value' ) );
+
+			case 'referrer':
+				if ( class_exists( 'Visigate_Pro_View_As' ) ) {
+					$sim = Visigate_Pro_View_As::check( $c );
+					if ( null !== $sim ) {
+						return $sim;
+					}
+				}
+				$ref = isset( $_SERVER['HTTP_REFERER'] ) && is_string( $_SERVER['HTTP_REFERER'] ) ? esc_url_raw( wp_unslash( $_SERVER['HTTP_REFERER'] ) ) : '';
+				$needle = is_scalar( $v ) ? (string) $v : '';
+				$hit    = '' !== $ref && '' !== $needle && false !== stripos( $ref, $needle );
+				return ( 'contains' === $op ) ? $hit : ! $hit;
+
 			case 'device':
 				$hit = in_array( self::device(), (array) $v, true );
 				return ( 'is_any' === $op ) ? $hit : ! $hit;
@@ -162,6 +189,27 @@ class Visigate_Engine {
 
 		// Add-on conditions. Unknown / inactive conditions evaluate to false (fail closed for "show" rules).
 		return (bool) apply_filters( 'visigate_check_condition', false, $c );
+	}
+
+	/** One part ("key" or "value") of a key/value condition as a string; '' when missing or malformed. */
+	private static function kv_part( $v, $part ) {
+		return is_array( $v ) && isset( $v[ $part ] ) && is_scalar( $v[ $part ] ) ? (string) $v[ $part ] : '';
+	}
+
+	public static function string_check( $actual, $op, $expected ) {
+		switch ( $op ) {
+			case 'exists':
+				return null !== $actual && '' !== $actual;
+			case 'not_exists':
+				return null === $actual || '' === $actual;
+			case 'equals':
+				return null !== $actual && $actual === $expected;
+			case 'not_equals':
+				return $actual !== $expected;
+			case 'contains':
+				return null !== $actual && false !== stripos( $actual, $expected );
+		}
+		return false;
 	}
 
 	/** Current site time, or the time being previewed with View as. */
