@@ -4,7 +4,7 @@ Tags: conditional content, visibility, elementor, block editor, personalization
 Requires at least: 6.2
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.5.0
+Stable tag: 1.5.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -47,7 +47,7 @@ https://www.youtube.com/watch?v=SIE5wlU_Eg0
 
 * **User:** login status, user role, specific users, user capability, account age
 * **Visitor:** device type (desktop, tablet, mobile), URL parameter, cookie, referrer
-* **Page location:** specific pages or posts, post type, and page view (singular or archive)
+* **Page location:** categories and tags (including descendants), specific pages or posts, post type, and page view (singular or archive)
 * **Time:** day of week, time of day, date range
 
 = Documentation =
@@ -139,6 +139,8 @@ Add **Specific users** and search by display name or username. **Is any of** mat
 
 = What do the page location rules match? =
 
+**Categories / tags** is included in Free. Search built-in WordPress categories and tags by name and select one or more. Selecting a parent category also matches its child categories. On a single page/post it checks assigned terms; on a category or tag archive it checks the archive term. Neither operator matches on other views, such as search results or custom-taxonomy archives. Rules use the page being visited, not an item inside a Query Loop. Custom taxonomies, including WooCommerce product categories and tags, require Pro.
+
 **Specific Page or Post** searches published content by title, including public-facing custom post types. Use **is any of** to match selected entries or **is none of** to match other singular entries. Both operators check the page being visited. Archive pages and the blog posts index do not match this condition.
 
 **Post type** checks the current page's single item or dedicated post type archive. It supports public-facing custom post types. **Page view** matches either a single item or a WordPress archive, including category, tag, author, and date archives. Search results and the blog posts index are separate views. These rules check the page being visited, regardless of which item a Query Loop block is displaying.
@@ -180,6 +182,9 @@ Yes. Visigate Pro is a separate plugin sold outside WordPress.org. This plugin d
 11. A menu item with a Visigate rule set, so "Log in" shows only to logged-out visitors.
 
 == Changelog ==
+
+= 1.5.1 =
+* New: category and tag visibility rules, including descendant categories, are included in Free. Custom-taxonomy targeting is available in Pro.
 
 = 1.5.0 =
 * New: classic menu items can use custom conditions directly, alongside the saved rule set option. Includes Show/Hide actions, AND/OR groups, admin preview and Pro menu fallbacks.
@@ -253,6 +258,9 @@ Pro conditions moved to the separate Visigate Pro add-on; unknown conditions now
 Initial release.
 
 == Upgrade Notice ==
+
+= 1.5.1 =
+Adds free category and tag visibility rules, including child categories. Update Visigate before updating Visigate Pro 1.5.1.
 
 = 1.4.2 =
 Shows WordPress's built-in block hiding alongside Visigate rules in the block editor, and restores the editor badges for blocks with rules.

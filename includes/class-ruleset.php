@@ -246,6 +246,26 @@ class Visigate_Ruleset {
 	public static function rest_search( WP_REST_Request $req ) {
 		$rows = array();
 		$term = trim( (string) $req['q'], " *\t\n\r\0\x0B" );
+		$tax = array_values( array_filter( array( 'category', 'post_tag' ), 'taxonomy_exists' ) );
+		// Term IDs may be a single digit (e.g. Uncategorized is 1), so numeric lookups skip the length check.
+		if ( 'category_tag_terms' === $req['type'] && $tax && ( strlen( $term ) >= 2 || ( '' !== $term && ctype_digit( $term ) ) ) ) {
+			$args = array( 'taxonomy' => $tax, 'hide_empty' => false, 'number' => 20, 'search' => $term );
+			if ( ctype_digit( $term ) ) {
+				unset( $args['search'] );
+				$args['include'] = array( (int) $term );
+			}
+			$terms = get_terms( $args );
+			if ( ! is_wp_error( $terms ) ) {
+				foreach ( $terms as $item ) {
+					$label = 'category' === $item->taxonomy ? __( 'Category', 'visigate' ) : __( 'Tag', 'visigate' );
+					$rows[] = array(
+						'id' => (int) $item->term_id,
+						/* translators: 1: term name, 2: taxonomy label, 3: term ID. */
+						'label' => sprintf( __( '%1$s (%2$s #%3$d)', 'visigate' ), sanitize_text_field( $item->name ), $label, $item->term_id ),
+					);
+				}
+			}
+		}
 		if ( 'users' === $req['type'] && strlen( $term ) >= 2 ) {
 			$users = get_users(
 				array(
@@ -282,8 +302,8 @@ class Visigate_Ruleset {
 				$title  = sanitize_text_field( $post->post_title );
 				$rows[] = array(
 					'id'    => (int) $post->ID,
-					/* translators: 1: post title, 2: singular post type label, 3: post ID. */
 					'label' => sprintf(
+						/* translators: 1: post title, 2: singular post type label, 3: post ID. */
 						__( '%1$s (%2$s #%3$d)', 'visigate' ),
 						'' !== $title ? $title : __( '(no title)', 'visigate' ),
 						$types[ $post->post_type ]->labels->singular_name,

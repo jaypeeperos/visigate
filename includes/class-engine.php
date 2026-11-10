@@ -164,6 +164,9 @@ class Visigate_Engine {
 			case 'page_view':
 				return ( 'singular' === $op && is_singular() ) || ( 'archive' === $op && is_archive() );
 
+			case 'post_category_tag':
+				return self::post_terms( $op, (array) $v, array( 'category', 'post_tag' ) );
+
 			case 'weekday':
 				$hit = in_array( self::now()->format( 'N' ), array_map( 'strval', (array) $v ), true );
 				return ( 'is_any' === $op ) ? $hit : ! $hit;
@@ -189,6 +192,45 @@ class Visigate_Engine {
 
 		// Add-on conditions. Unknown / inactive conditions evaluate to false (fail closed for "show" rules).
 		return (bool) apply_filters( 'visigate_check_condition', false, $c );
+	}
+
+	/** Match the queried page or taxonomy archive; never use the global loop post. */
+	public static function post_terms( $op, $ids, $taxonomies ) {
+		// A site may unregister post_tag (or category); skip it rather than erroring the whole rule.
+		$taxonomies = array_values( array_filter( (array) $taxonomies, 'taxonomy_exists' ) );
+		if ( ! $taxonomies || ! in_array( $op, array( 'is_any', 'is_none' ), true ) ) {
+			return false;
+		}
+		$ids = array_values( array_unique( array_map( 'absint', $ids ) ) );
+		if ( ! $ids || in_array( 0, $ids, true ) ) {
+			return false;
+		}
+		// Do not let a custom/deleted term turn a negative Free condition into a match.
+		$valid = get_terms( array( 'taxonomy' => $taxonomies, 'include' => $ids, 'hide_empty' => false, 'fields' => 'ids' ) );
+		if ( is_wp_error( $valid ) || array_diff( $ids, array_map( 'intval', $valid ) ) ) {
+			return false;
+		}
+		if ( is_singular() && get_queried_object_id() ) {
+			$terms = wp_get_object_terms( get_queried_object_id(), $taxonomies );
+		} elseif ( is_category() || is_tag() || is_tax() ) {
+			$term = get_queried_object();
+			if ( ! $term instanceof WP_Term || ! in_array( $term->taxonomy, $taxonomies, true ) ) {
+				return false;
+			}
+			$terms = array( $term );
+		} else {
+			return false;
+		}
+		if ( is_wp_error( $terms ) ) {
+			return false;
+		}
+		$found = array();
+		foreach ( $terms as $term ) {
+			$found[] = (int) $term->term_id;
+			$found = array_merge( $found, get_ancestors( $term->term_id, $term->taxonomy, 'taxonomy' ) );
+		}
+		$hit = (bool) array_intersect( $found, $ids );
+		return 'is_any' === $op ? $hit : ! $hit;
 	}
 
 	/** One part ("key" or "value") of a key/value condition as a string; '' when missing or malformed. */

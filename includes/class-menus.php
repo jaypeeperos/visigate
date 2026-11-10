@@ -108,15 +108,15 @@ class Visigate_Menus {
 		if ( ! wp_verify_nonce( $nonce, 'update-nav_menu' ) || ! current_user_can( visigate_capability() ) || ! current_user_can( 'edit_theme_options' ) ) {
 			return;
 		}
-		$selection = wp_unslash( $_POST['visigate_menu_set'][ $item_id ] );
+		$selection = wp_unslash( $_POST['visigate_menu_set'][ $item_id ] ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Scalar-checked and cast with absint() below.
 		if ( ! is_scalar( $selection ) ) {
 			return;
 		}
 		$set = absint( $selection );
 		if ( '-1' === (string) $selection ) {
-			// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Verified above.
-			$json = $_POST['visigate_menu_rules'][ $item_id ] ?? null;
-			$rules = is_string( $json ) ? json_decode( wp_unslash( $json ), true ) : null;
+			// phpcs:ignore WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Nonce verified above; the JSON is decoded and whitelist-sanitized by Visigate_Conditions::sanitize() below.
+			$json = isset( $_POST['visigate_menu_rules'][ $item_id ] ) ? wp_unslash( $_POST['visigate_menu_rules'][ $item_id ] ) : null;
+			$rules = is_string( $json ) ? json_decode( $json, true ) : null;
 			if ( ! is_array( $rules ) || ! isset( $rules['groups'] ) || ! is_array( $rules['groups'] ) ) {
 				return; // A missing or malformed builder payload must not erase saved visibility.
 			}

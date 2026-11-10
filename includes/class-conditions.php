@@ -73,6 +73,8 @@ class Visigate_Conditions {
 			array( 'label' => __( 'User meta', 'visigate' ), 'group' => 'user' ),
 			array( 'label' => __( 'Post meta', 'visigate' ), 'group' => 'location' ),
 			array( 'label' => __( 'ACF field', 'visigate' ), 'group' => 'location' ),
+			array( 'label' => __( 'Custom taxonomy', 'visigate' ), 'group' => 'location' ),
+			array( 'label' => __( 'Page/post ancestor', 'visigate' ), 'group' => 'location' ),
 		);
 		if ( class_exists( 'WooCommerce' ) ) {
 			$woo = array(
@@ -87,6 +89,11 @@ class Visigate_Conditions {
 				__( 'Shipping country', 'visigate' ),
 				__( 'Has left a review', 'visigate' ),
 				__( 'Days since last order', 'visigate' ),
+				__( 'Cart item quantity', 'visigate' ),
+				__( 'Cart contains category', 'visigate' ),
+				__( 'Stock status (current product)', 'visigate' ),
+				__( 'Stock quantity (current product)', 'visigate' ),
+				__( 'Sale status (current product)', 'visigate' ),
 			);
 			foreach ( $woo as $l ) {
 				$t[] = array( 'label' => $l, 'group' => 'woo' );
@@ -156,6 +163,9 @@ class Visigate_Conditions {
 			),
 
 			// ---- Page location ----------------------------------------------
+			'post_category_tag' => array(
+				'label' => __( 'Categories / tags (includes descendants)', 'visigate' ), 'group' => 'location', 'input' => 'async', 'source' => 'category_tag_terms', 'ops' => $in,
+			),
 			'specific_post'    => array(
 				'label' => __( 'Specific Page or Post', 'visigate' ), 'group' => 'location', 'input' => 'async', 'source' => 'posts', 'ops' => $in,
 			),

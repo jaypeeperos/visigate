@@ -135,15 +135,13 @@ class Visigate_Usage {
 
 	private static function build() {
 		global $wpdb;
-		$index    = array();
-		$excluded = "'revision','" . esc_sql( Visigate_Ruleset::CPT ) . "'";
-		$statuses = "'auto-draft','trash','inherit'";
+		$index = array();
 
 		// Blocks and shortcodes in post content (all post types, including patterns, templates and navigation menus).
 		$offset = 0;
 		do {
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-			$rows = $wpdb->get_results( $wpdb->prepare( "SELECT ID, post_content FROM {$wpdb->posts} WHERE post_type NOT IN ($excluded) AND post_status NOT IN ($statuses) AND ( post_content LIKE %s OR post_content LIKE %s ) ORDER BY ID LIMIT %d, 200", '%visigateSet%', '%[visigate%', $offset ) );
+			$rows = $wpdb->get_results( $wpdb->prepare( "SELECT ID, post_content FROM {$wpdb->posts} WHERE post_type NOT IN (%s, %s) AND post_status NOT IN ('auto-draft', 'trash', 'inherit') AND ( post_content LIKE %s OR post_content LIKE %s ) ORDER BY ID LIMIT %d, 200", 'revision', Visigate_Ruleset::CPT, '%visigateSet%', '%[visigate%', $offset ) );
 			foreach ( $rows as $row ) {
 				self::add( $index, self::scan_content( $row->post_content ), 'post', (int) $row->ID );
 			}
@@ -154,7 +152,7 @@ class Visigate_Usage {
 		$offset = 0;
 		do {
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-			$rows = $wpdb->get_results( $wpdb->prepare( "SELECT pm.post_id, pm.meta_value FROM {$wpdb->postmeta} pm INNER JOIN {$wpdb->posts} p ON p.ID = pm.post_id WHERE pm.meta_key = '_elementor_data' AND pm.meta_value LIKE %s AND p.post_type NOT IN ($excluded) AND p.post_status NOT IN ($statuses) ORDER BY pm.meta_id LIMIT %d, 100", '%visigate\_set%', $offset ) );
+			$rows = $wpdb->get_results( $wpdb->prepare( "SELECT pm.post_id, pm.meta_value FROM {$wpdb->postmeta} pm INNER JOIN {$wpdb->posts} p ON p.ID = pm.post_id WHERE pm.meta_key = '_elementor_data' AND pm.meta_value LIKE %s AND p.post_type NOT IN (%s, %s) AND p.post_status NOT IN ('auto-draft', 'trash', 'inherit') ORDER BY pm.meta_id LIMIT %d, 100", '%visigate\_set%', 'revision', Visigate_Ruleset::CPT, $offset ) );
 			foreach ( $rows as $row ) {
 				self::add( $index, self::scan_elementor( $row->meta_value ), 'post', (int) $row->post_id );
 			}
