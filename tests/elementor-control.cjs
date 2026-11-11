@@ -50,6 +50,9 @@ for ( const modern of [ true, false ] ) {
 	assert.equal( saved, '' );
 	assert.equal( rendered.props.value.action, 'hide' );
 	const rules = { action: 'hide', groups: [ { conditions: [ { type: 'logged_in', op: 'is' } ] } ] };
+	const always = { action: 'show', groups: [], always_hide: true };
+	rendered.props.onChange( always );
+	assert.deepEqual( JSON.parse( saved ), always, 'Always hide persists without conditions' );
 	rendered.props.onChange( rules );
 	assert.deepEqual( JSON.parse( saved ), rules );
 	// Reopening the panel reloads the serialized settings.

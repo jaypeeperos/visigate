@@ -29,7 +29,7 @@
 	}
 
 	function hasRules( a ) {
-		return !! ( a && ( a.visigateSet || ( a.visigateRules && a.visigateRules.groups && a.visigateRules.groups.length ) ) );
+		return !! ( a && ( a.visigateSet || ( a.visigateRules && ( a.visigateRules.always_hide || ( a.visigateRules.groups && a.visigateRules.groups.length ) ) ) ) );
 	}
 
 	// WordPress core block visibility (6.9+: metadata.blockVisibility === false hides the block
@@ -136,8 +136,8 @@
 				onChange: function ( v ) {
 					// Keep a non-default action even before any condition exists, otherwise the
 					// "Hide this content when…" choice is discarded and the select snaps back to "Show".
-					// Rules without groups are ignored at render time, so the content stays visible.
-					props.setAttributes( { visigateRules: v && ( ( v.groups && v.groups.length ) || v.action === 'hide' ) ? v : undefined } );
+					// Empty conditional rules stay visible; Always hide also works without groups.
+					props.setAttributes( { visigateRules: v && ( v.always_hide || ( v.groups && v.groups.length ) || v.action === 'hide' ) ? v : undefined } );
 				},
 			} ),
 			hasSidebar && ! props.isPatternInstance && ( props.name === 'core/block' || ( a.metadata && a.metadata.patternName ) )

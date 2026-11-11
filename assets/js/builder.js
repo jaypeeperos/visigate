@@ -2,7 +2,7 @@
  * Visigate visual rule builder.
  * Plain wp.element (no JSX / no build step). Exposes window.VisigateBuilder.
  *
- * Data model:  { action: 'show'|'hide', groups: [ { conditions: [ {type, op, value, days?, labels?} ] } ] }
+ * Data model:  { action: 'show'|'hide', always_hide?: boolean, groups: [ { conditions: [ {type, op, value, days?, labels?} ] } ] }
  * Groups are OR'd together; conditions inside a group are AND'd.
  */
 ( function ( wp ) {
@@ -146,6 +146,9 @@
 	}
 
 	function describe( rules ) {
+		if ( rules.always_hide ) {
+			return __( 'Always hidden — existing conditions are preserved until you turn this off.', 'visigate' );
+		}
 		var parts = rules.groups.map( function ( g ) {
 			return g.conditions.map( describeCond ).join( ' AND ' );
 		} ).filter( Boolean );
@@ -283,6 +286,7 @@
 				? el( Select, { label: __( 'Operator', 'visigate' ), value: cond.op, options: opsOptions( s ), onChange: function ( op ) { patch( { op: op } ); } } )
 				: null,
 			el( ValueInput, { cond: cond, schema: s, onChange: patch } ),
+			s.help ? el( 'p', { className: 'description' }, s.help ) : null,
 			s.days
 				? el( Text, { label: __( 'Within last N days (0 = any time)', 'visigate' ), showLabel: true, type: 'number', min: 0, value: cond.days || '', onChange: function ( x ) { patch( { days: parseInt( x, 10 ) || 0 } ); } } )
 				: null,
@@ -340,6 +344,18 @@
 		}
 
 		return el( 'div', { className: 'vg-builder' },
+			el( comp.ToggleControl, {
+				label: __( 'Always hide', 'visigate' ),
+				help: __( 'Hide this content regardless of conditions. Turn off to restore your existing rules.', 'visigate' ),
+				checked: !! rules.always_hide,
+				onChange: function ( value ) {
+					var r = clone( rules );
+					if ( value ) { r.always_hide = true; } else { delete r.always_hide; }
+					emit( r );
+				},
+				__nextHasNoMarginBottom: true,
+			} ),
+			el( 'fieldset', { className: 'vg-builder__conditions', disabled: !! rules.always_hide },
 			el( Select, {
 				label: __( 'Action', 'visigate' ),
 				value: rules.action,
@@ -379,7 +395,7 @@
 					r.groups.push( { conditions: [ newCond() ] } );
 					emit( r );
 				},
-			}, rules.groups.length ? '+ ' + __( 'Add OR group', 'visigate' ) : '+ ' + __( 'Add condition', 'visigate' ) ),
+			}, rules.groups.length ? '+ ' + __( 'Add OR group', 'visigate' ) : '+ ' + __( 'Add condition', 'visigate' ) ) ),
 			el( 'p', { className: 'vg-summary' }, describe( rules ) )
 		);
 	}

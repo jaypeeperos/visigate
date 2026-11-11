@@ -41,6 +41,14 @@ if ( 'pro' === $mode ) {
 	} );
 }
 $all = Visigate_Conditions::all();
+$hidden = array( 'action' => 'show', 'groups' => array(), 'always_hide' => true );
+expect( $hidden === Visigate_Conditions::sanitize( $hidden ), 'Always hide persists without conditions' );
+expect( ! Visigate_Engine::visible( $hidden ), 'Always hide works without groups' );
+$hidden['groups'] = array( array( 'conditions' => array( array( 'type' => 'unknown', 'op' => 'is' ) ) ) );
+expect( ! Visigate_Engine::visible( $hidden ), 'Always hide overrides existing rules' );
+unset( $hidden['always_hide'] );
+expect( ! Visigate_Engine::visible( $hidden ), 'Turning off Always hide retains existing rules' );
+expect( Visigate_Engine::visible( array( 'groups' => array(), 'always_hide' => 'false' ) ), 'Only explicit booleans enable Always hide' );
 foreach ( array( 'url_param', 'cookie', 'referrer' ) as $type ) {
 	expect( ! $all[ $type ]['pro'] && ! $all[ $type ]['locked'] && $all[ $type ]['dynamic'], "$type must stay free and dynamic" );
 }

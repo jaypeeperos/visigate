@@ -1,5 +1,7 @@
 /* Visigate builder — admin & block editor only. Never loaded on the front end. */
 .vg-builder { display: flex; flex-direction: column; gap: 10px; max-width: 760px; }
+.vg-builder__conditions { display: flex; flex-direction: column; gap: 10px; border: 0; padding: 0; margin: 0; min-width: 0; }
+.vg-builder__conditions:disabled { opacity: .6; }
 .vg-group { border: 1px solid #c3c4c7; border-left: 4px solid #2271b1; border-radius: 4px; padding: 12px; background: #fff; display: flex; flex-direction: column; gap: 10px; }
 .vg-cond { display: flex; flex-direction: column; gap: 8px; padding: 10px; background: #f6f7f7; border-radius: 4px; }
 .vg-cond__top { display: flex; gap: 6px; align-items: center; }

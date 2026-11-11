@@ -8,6 +8,7 @@ defined( 'ABSPATH' ) || exit;
  *
  *   {
  *     "action": "show" | "hide",
+ *     "always_hide": true,              // optional override; conditions are preserved
  *     "groups": [                       // groups are OR'd
  *        { "conditions": [              // conditions inside a group are AND'd
  *            { "type": "user_role", "op": "is_any", "value": ["customer"] },
@@ -70,6 +71,9 @@ class Visigate_Conditions {
 	public static function teasers() {
 		$t = array(
 			array( 'label' => __( 'Country', 'visigate' ), 'group' => 'visitor' ),
+			array( 'label' => __( 'Browser', 'visigate' ), 'group' => 'visitor' ),
+			array( 'label' => __( 'IP address', 'visigate' ), 'group' => 'visitor' ),
+			array( 'label' => __( 'IP range / CIDR (Business)', 'visigate' ), 'group' => 'visitor' ),
 			array( 'label' => __( 'User meta', 'visigate' ), 'group' => 'user' ),
 			array( 'label' => __( 'Post meta', 'visigate' ), 'group' => 'location' ),
 			array( 'label' => __( 'ACF field', 'visigate' ), 'group' => 'location' ),
@@ -260,6 +264,9 @@ class Visigate_Conditions {
 			return $out;
 		}
 		$out['action'] = ( ( $rules['action'] ?? '' ) === 'hide' ) ? 'hide' : 'show';
+		if ( isset( $rules['always_hide'] ) && in_array( $rules['always_hide'], array( true, 1, '1' ), true ) ) {
+			$out['always_hide'] = true;
+		}
 		$all           = self::all();
 		$opts          = self::options();
 

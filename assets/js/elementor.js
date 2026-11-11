@@ -29,7 +29,7 @@
 				var builder = wp.element.createElement( window.VisigateBuilder, {
 					value: value,
 					onChange: function ( rules ) {
-						view.setValue( rules && rules.groups && rules.groups.length ? JSON.stringify( rules ) : '' );
+						view.setValue( rules && ( rules.always_hide || ( rules.groups && rules.groups.length ) ) ? JSON.stringify( rules ) : '' );
 						view.renderBuilder( rules );
 					},
 				} );

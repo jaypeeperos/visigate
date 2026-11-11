@@ -26,7 +26,7 @@
 					value: draft[ 0 ],
 					onChange: function ( rules ) {
 						draft[ 1 ]( rules );
-						bound.setValue( rules && rules.groups && rules.groups.length ? JSON.stringify( rules ) : '' );
+						bound.setValue( rules && ( rules.always_hide || ( rules.groups && rules.groups.length ) ) ? JSON.stringify( rules ) : '' );
 					},
 				} )
 			)

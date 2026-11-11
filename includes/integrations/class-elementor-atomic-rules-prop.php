@@ -5,7 +5,7 @@ defined( 'ABSPATH' ) || exit;
 class Visigate_Elementor_Atomic_Rules_Prop extends \Elementor\Modules\AtomicWidgets\PropTypes\Primitives\String_Prop_Type {
 	protected function sanitize_value( $value ) {
 		$rules = json_decode( $value, true );
-		if ( ! is_array( $rules ) || empty( $rules['groups'] ) ) {
+		if ( ! is_array( $rules ) || ( empty( $rules['groups'] ) && empty( $rules['always_hide'] ) ) ) {
 			return '';
 		}
 		return wp_json_encode( Visigate_Conditions::sanitize( $rules ) );

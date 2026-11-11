@@ -4,7 +4,7 @@ Tags: conditional content, visibility, elementor, block editor, personalization
 Requires at least: 6.2
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.5.1
+Stable tag: 1.5.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -30,6 +30,7 @@ https://www.youtube.com/watch?v=SIE5wlU_Eg0
 
 = Key features =
 
+* **Always hide:** temporarily hide content without adding a condition. Existing conditions remain saved and resume when you turn the toggle off. Available in saved rule sets and custom rules for blocks, patterns, menus and Elementor elements. Editor content remains editable; admin reveal and configured Pro fallbacks retain their usual behavior.
 * **Visual rule builder:** combine conditions without code. Conditions in a group must all match (AND), and any matching group is enough (OR).
 * **Plain-English summaries:** every rule set describes itself, so you can check its logic at a glance.
 * **Reusable rule sets:** build a rule once and use it across your site. Edit it in one place and every use updates.
@@ -182,6 +183,10 @@ Yes. Visigate Pro is a separate plugin sold outside WordPress.org. This plugin d
 11. A menu item with a Visigate rule set, so "Log in" shows only to logged-out visitors.
 
 == Changelog ==
+
+= 1.5.2 =
+* New: Always hide toggle in the shared rule builder. Hide content without conditions while preserving existing rules, in saved sets, blocks/patterns, classic menus and classic/atomic Elementor elements.
+* Improved: visitor-condition help text in the rule builder and teasers for Pro browser/IP targeting and Business IP ranges.
 
 = 1.5.1 =
 * New: category and tag visibility rules, including descendant categories, are included in Free. Custom-taxonomy targeting is available in Pro.

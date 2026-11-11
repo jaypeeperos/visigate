@@ -204,6 +204,10 @@ class Visigate_Ruleset {
 		}
 		if ( 'visigate_rule' === $col ) {
 			$r = get_post_meta( $post_id, self::META, true );
+			if ( ! empty( $r['always_hide'] ) ) {
+				esc_html_e( 'Always hidden', 'visigate' );
+				return;
+			}
 			if ( empty( $r['groups'] ) ) {
 				esc_html_e( 'No conditions (always visible)', 'visigate' );
 				return;

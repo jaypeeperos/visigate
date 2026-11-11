@@ -62,6 +62,11 @@ add_filter( 'visigate_hidden_menu_item', function ( $replacement, $item, $set ) 
 $items = Visigate_Menus::filter_items( menu_items() );
 expect( array( 10, 20 ) === array_column( $items, 'ID' ) && 'Replacement' === $items[0]->title, 'Fallback replaces hidden custom item and removes descendants' );
 unset( $hooks['visigate_hidden_menu_item'] );
+$always = array( 'action' => 'show', 'groups' => array(), 'always_hide' => true );
+$_POST = array( 'update-nav-menu-nonce' => 'ok', 'visigate_menu_set' => array( 10 => '-1' ), 'visigate_menu_rules' => array( 10 => json_encode( $always ) ) );
+Visigate_Menus::save( 1, 10 );
+expect( $always === Visigate_Menus::get_rules( 10 ), 'Always hide persists for menu items' );
+expect( array( 20 ) === array_column( Visigate_Menus::filter_items( menu_items() ), 'ID' ), 'Always hide removes parent and descendants without conditions' );
 $_POST = array( 'update-nav-menu-nonce' => 'ok', 'visigate_menu_set' => array( 10 => '99' ) );
 Visigate_Menus::save( 1, 10 );
 expect( 99 === Visigate_Menus::get_set( 10 ) && array() === Visigate_Menus::get_rules( 10 ), 'Saved set mode clears custom rules' );

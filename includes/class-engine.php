@@ -26,6 +26,9 @@ class Visigate_Engine {
 
 	/** Visibility for a rules array. Empty rules = always visible. */
 	public static function visible( $rules ) {
+		if ( is_array( $rules ) && isset( $rules['always_hide'] ) && in_array( $rules['always_hide'], array( true, 1, '1' ), true ) ) {
+			return false;
+		}
 		if ( ! is_array( $rules ) || empty( $rules['groups'] ) ) {
 			return true;
 		}

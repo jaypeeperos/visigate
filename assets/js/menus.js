@@ -22,7 +22,9 @@
 		var mode = modeOf( select.value );
 		var text = '';
 		var warn = false;
-		if ( 'custom' === mode && count( rules ) ) {
+		if ( 'custom' === mode && rules && rules.always_hide ) {
+			text = __( 'Always hidden', 'visigate' );
+		} else if ( 'custom' === mode && count( rules ) ) {
 			text = __( 'Custom visibility', 'visigate' );
 		} else if ( 'set' === mode ) {
 			var opt = select.options[ select.selectedIndex ];

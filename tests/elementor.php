@@ -154,6 +154,13 @@ namespace {
 	check( 'logged_in' === json_decode( $clean['value'], true )['groups'][0]['conditions'][0]['type'], 'Rule JSON must survive atomic sanitization' );
 	$clean = $schema['visigate_rules']->sanitize( $typed( '{broken' ) );
 	check( '' === $clean['value'], 'Malformed atomic JSON must sanitize to empty' );
+	$always = array( 'action' => 'show', 'groups' => array(), 'always_hide' => true );
+	$clean = $schema['visigate_rules']->sanitize( $typed( json_encode( $always ) ) );
+	check( $always === json_decode( $clean['value'], true ), 'Atomic sanitizer retains Always hide without groups' );
+	$element->settings = array( 'visigate_rules' => $typed( json_encode( $always ) ) );
+	check( ! $render( true, $element ), 'Atomic elements honor Always hide' );
+	$element->settings = array( 'visigate_rules' => json_encode( $always ) );
+	check( ! $render( true, $element ), 'Classic elements honor Always hide' );
 	$atomic_controls = $hooks['elementor/atomic-widgets/controls'];
 	$sections = $atomic_controls( array(), $element );
 	check( 'visigate' === $sections[0]->id && 'visigate_rules' === $sections[0]->items[1]->bind, 'Atomic controls must bind to declared props' );
