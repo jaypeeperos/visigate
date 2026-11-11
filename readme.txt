@@ -187,6 +187,7 @@ Yes. Visigate Pro is a separate plugin sold outside WordPress.org. This plugin d
 = 1.5.2 =
 * New: Always hide toggle in the shared rule builder. Hide content without conditions while preserving existing rules, in saved sets, blocks/patterns, classic menus and classic/atomic Elementor elements.
 * Improved: visitor-condition help text in the rule builder and teasers for Pro browser/IP targeting and Business IP ranges.
+* Fixed: saving a rule set no longer strips backslashes from URL parameter and cookie values, and a malformed save request no longer erases the set's rules.
 
 = 1.5.1 =
 * New: category and tag visibility rules, including descendant categories, are included in Free. Custom-taxonomy targeting is available in Pro.
@@ -263,6 +264,9 @@ Pro conditions moved to the separate Visigate Pro add-on; unknown conditions now
 Initial release.
 
 == Upgrade Notice ==
+
+= 1.5.2 =
+Adds an Always hide switch to the rule builder and fixes backslashes being removed from rule set values. Update Visigate before updating Visigate Pro 1.5.2.
 
 = 1.5.1 =
 Adds free category and tag visibility rules, including child categories. Update Visigate before updating Visigate Pro 1.5.1.

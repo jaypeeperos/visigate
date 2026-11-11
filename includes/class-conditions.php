@@ -340,7 +340,13 @@ class Visigate_Conditions {
 			case 'number':
 				return is_numeric( $v ) ? $v + 0 : '';
 			case 'text':
-				return sanitize_text_field( (string) $v );
+				if ( ! empty( $s['list'] ) && is_scalar( $v ) ) {
+					// Comma or line separated lists: drop stray separators and blank entries, so a
+					// trailing comma typed in the builder never turns the whole rule invalid.
+					$items = array_filter( array_map( 'sanitize_text_field', preg_split( '/[,\r\n]+/', (string) $v ) ), 'strlen' );
+					return implode( ', ', $items );
+				}
+				return is_scalar( $v ) ? sanitize_text_field( (string) $v ) : '';
 			case 'kv':
 				return array(
 					'key'   => sanitize_text_field( (string) ( $v['key'] ?? '' ) ),

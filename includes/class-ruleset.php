@@ -121,8 +121,12 @@ class Visigate_Ruleset {
 		if ( ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) || ! current_user_can( visigate_capability() ) ) {
 			return;
 		}
-		$raw   = isset( $_POST['visigate_rules_json'] ) ? json_decode( wp_unslash( $_POST['visigate_rules_json'] ), true ) : array(); // phpcs:ignore
-		update_post_meta( $post_id, self::META, Visigate_Conditions::sanitize( $raw ) );
+		$raw = isset( $_POST['visigate_rules_json'] ) ? json_decode( wp_unslash( $_POST['visigate_rules_json'] ), true ) : null; // phpcs:ignore
+		if ( ! is_array( $raw ) ) {
+			return; // A missing or malformed builder payload must not erase the saved rules.
+		}
+		// update_post_meta() unslashes its value, so slash it to keep backslashes in cookie or URL values.
+		update_post_meta( $post_id, self::META, wp_slash( Visigate_Conditions::sanitize( $raw ) ) );
 	}
 
 	/* ---------------------------- List table ---------------------------- */
