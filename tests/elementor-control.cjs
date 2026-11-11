@@ -3,7 +3,7 @@ const assert = require( 'node:assert/strict' );
 const fs = require( 'node:fs' );
 const vm = require( 'node:vm' );
 
-for ( const modern of [ true, false ] ) {
+{
 	let init, nativeInit, Control, rendered, registrations = 0, unmounted = false;
 	const mount = {};
 	const Base = {
@@ -12,15 +12,11 @@ for ( const modern of [ true, false ] ) {
 	};
 	const element = {
 		createElement: ( type, props ) => ( { type, props } ),
-		render( tree ) { rendered = tree; },
-		unmountComponentAtNode( node ) { assert.equal( node, mount ); unmounted = true; },
-	};
-	if ( modern ) {
-		element.createRoot = ( node ) => {
+		createRoot( node ) {
 			assert.equal( node, mount );
-			return { render: element.render, unmount() { unmounted = true; } };
-		};
-	}
+			return { render( tree ) { rendered = tree; }, unmount() { unmounted = true; } };
+		},
+	};
 	const window = {
 		wp: { element },
 		addEventListener( event, callback ) { assert.equal( event, 'elementor/init' ); nativeInit = callback; },
@@ -85,4 +81,4 @@ deferredWindow.elementor = {
 };
 deferred();
 assert.ok( registered, 'Register when Elementor starts after the script loads' );
-console.log( 'PASS: immediate/deferred registration, native/legacy events, React mounting, JSON persistence and cleanup.' );
+console.log( 'PASS: immediate/deferred registration, native/legacy events, React 18 roots, JSON persistence and cleanup.' );

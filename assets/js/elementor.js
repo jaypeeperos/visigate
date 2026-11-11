@@ -11,14 +11,13 @@
 		var RulesControl = Base.extend( {
 			onReady: function () {
 				this.mount = this.el.querySelector( '.vg-elementor-builder' );
-				if ( wp.element.createRoot ) {
-					this.root = wp.element.createRoot( this.mount );
-				}
+				// createRoot ships with WordPress 6.2+ (React 18), the plugin's minimum.
+				this.root = this.mount ? wp.element.createRoot( this.mount ) : null;
 				this.renderBuilder();
 			},
 
 			renderBuilder: function ( draft ) {
-				if ( ! this.mount ) {
+				if ( ! this.root ) {
 					return;
 				}
 				var view = this;
@@ -33,11 +32,7 @@
 						view.renderBuilder( rules );
 					},
 				} );
-				if ( this.root ) {
-					this.root.render( builder );
-				} else {
-					wp.element.render( builder, this.mount );
-				}
+				this.root.render( builder );
 			},
 
 			onAfterExternalChange: function () {
@@ -48,9 +43,8 @@
 			onBeforeDestroy: function () {
 				if ( this.root ) {
 					this.root.unmount();
-				} else if ( this.mount ) {
-					wp.element.unmountComponentAtNode( this.mount );
 				}
+				this.root = null;
 				this.mount = null;
 			},
 		} );
