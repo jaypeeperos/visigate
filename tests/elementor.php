@@ -74,6 +74,9 @@ namespace {
 	function wp_json_encode( $value ) { return json_encode( $value ); }
 	function get_post( $id ) { return (object) array( 'post_type' => 99 === $id ? 'elementor_library' : 'visigate_set', 'post_status' => 'publish' ); }
 	function absint( $value ) { return abs( (int) $value ); }
+	function get_the_ID() { return 0; }
+	function is_singular() { return false; }
+	function get_queried_object_id() { return 0; }
 	function sanitize_text_field( $value ) { return strip_tags( $value ); }
 	function sanitize_key( $value ) { return strtolower( preg_replace( '/[^a-zA-Z0-9_-]/', '', $value ) ); }
 	function wp_roles() { return (object) array( 'roles' => array() ); }
@@ -88,7 +91,7 @@ namespace {
 	}
 	class Visigate_Admin { public static function opt( $key ) { return false; } }
 	class Visigate_View_As { public static function logged_in() { return is_user_logged_in(); } }
-	class Visigate_Frontend { public static function preview_enabled() { return $GLOBALS['preview']; } }
+	class Visigate_Frontend { public static function preview_enabled() { return $GLOBALS['preview']; } public static function evaluate( $kind, $label, $key, $loop_post, $check ) { return $check(); } }
 	function check( $condition, $message ) { if ( ! $condition ) { throw new \Exception( $message ); } }
 	function rules( $op, $action = 'show' ) {
 		return array( 'action' => $action, 'groups' => array( array( 'conditions' => array( array( 'type' => 'logged_in', 'op' => $op ) ) ) ) );

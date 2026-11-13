@@ -159,9 +159,27 @@ class Visigate_Menus {
 		$out     = array();
 
 		foreach ( $items as $i => $item ) {
-			$set = isset( $item->ID ) ? self::get_set( $item->ID ) : 0;
+			$set   = isset( $item->ID ) ? self::get_set( $item->ID ) : 0;
 			$rules = isset( $item->ID ) ? self::get_rules( $item->ID ) : array();
-			if ( $set ? Visigate_Engine::set_visible( $set ) : Visigate_Engine::visible( $rules ) ) {
+			if ( ! $set && empty( $rules ) ) {
+				continue;
+			}
+			$inspect = class_exists( 'Visigate_Inspector' ) && Visigate_Inspector::recording();
+			$key     = 'menu:' . (int) ( $item->ID ?? 0 );
+			$visible = Visigate_Frontend::evaluate(
+				'menu_item',
+				/* translators: %s: menu item title. */
+				$inspect ? sprintf( __( 'Menu item: %s', 'visigate' ), wp_strip_all_tags( (string) ( $item->title ?? '' ) ) ) : '',
+				$key,
+				0,
+				function () use ( $set, $rules ) {
+					return $set ? Visigate_Engine::set_visible( $set ) : Visigate_Engine::visible( $rules );
+				}
+			);
+			if ( $inspect ) {
+				$items[ $i ]->visigate_key = $key;
+			}
+			if ( $visible ) {
 				continue;
 			}
 			if ( $preview ) {
@@ -171,8 +189,15 @@ class Visigate_Menus {
 			}
 			$replacement = apply_filters( 'visigate_hidden_menu_item', null, $item, $set );
 			if ( is_object( $replacement ) ) {
+				if ( $inspect ) {
+					$replacement->visigate_key = $key;
+					Visigate_Inspector::note_fallback( $key, true );
+				}
 				$items[ $i ] = $replacement;
 			} else {
+				if ( $inspect ) {
+					Visigate_Inspector::note_fallback( $key, false );
+				}
 				$drop[ (int) $item->ID ] = true;
 			}
 			// Sub-items of a hidden or replaced item are removed either way.
@@ -187,7 +212,7 @@ class Visigate_Menus {
 		$cut = array();
 		foreach ( $items as $item ) {
 			if ( ! empty( $item->visigate_drop_children ) ) {
-				$cut[ (int) $item->ID ] = true;
+				$cut[ (int) $item->ID ] = ! empty( $item->visigate_key ) ? (string) $item->visigate_key : true;
 			}
 		}
 		foreach ( $items as $item ) {
@@ -195,12 +220,14 @@ class Visigate_Menus {
 			if ( isset( $drop[ $id ] ) ) {
 				continue;
 			}
-			$p     = $parents[ $id ] ?? 0;
-			$guard = 0;
-			$under = false;
+			$p         = $parents[ $id ] ?? 0;
+			$guard     = 0;
+			$under     = false;
+			$under_key = '';
 			while ( $p && $guard++ < 50 ) {
 				if ( isset( $cut[ $p ] ) ) {
-					$under = true;
+					$under     = true;
+					$under_key = is_string( $cut[ $p ] ) ? $cut[ $p ] : '';
 					break;
 				}
 				$p = $parents[ $p ] ?? 0;
@@ -210,6 +237,9 @@ class Visigate_Menus {
 					continue;
 				}
 				$item->visigate_hidden = true;
+				if ( empty( $item->visigate_key ) && '' !== $under_key ) {
+					$item->visigate_key = $under_key;
+				}
 			}
 			$out[] = $item;
 		}
@@ -218,9 +248,17 @@ class Visigate_Menus {
 
 	/** Admin preview: outline hidden menu items instead of removing them. */
 	public static function preview_title( $title, $item ) {
-		if ( empty( $item->visigate_hidden ) ) {
-			return $title;
+		$key = ! empty( $item->visigate_key ) ? (string) $item->visigate_key : '';
+		$rec = '' !== $key && class_exists( 'Visigate_Inspector' ) && Visigate_Inspector::recording();
+		if ( ! empty( $item->visigate_hidden ) ) {
+			$attrs = $rec
+				? Visigate_Inspector::preview_attrs( $key )
+				: 'title="' . esc_attr__( 'Hidden from this visitor by Visigate', 'visigate' ) . '"';
+			return '<span class="visigate-preview-hidden" ' . $attrs . ' style="outline:2px dashed #d63638;outline-offset:2px;opacity:.5">' . $title . '</span>';
 		}
-		return '<span class="visigate-preview-hidden" title="' . esc_attr__( 'Hidden from this visitor by Visigate', 'visigate' ) . '" style="outline:2px dashed #d63638;outline-offset:2px;opacity:.5">' . $title . '</span>';
+		if ( $rec ) {
+			return Visigate_Inspector::anchor( $key ) . $title;
+		}
+		return $title;
 	}
 }

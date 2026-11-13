@@ -78,6 +78,7 @@ class Visigate_Admin {
 								<input type="checkbox" name="<?php echo esc_attr( self::OPTION ); ?>[auto_nocache]" value="1" <?php checked( self::opt( 'auto_nocache' ) ); ?>>
 								<?php esc_html_e( 'Automatically exclude a page from page caching when it uses specific user, device, time, or visitor-specific Pro rules such as country or cart.', 'visigate' ); ?>
 							</label>
+							<p class="description"><a href="<?php echo esc_url( Visigate_Cache_Check::page_url() ); ?>"><?php esc_html_e( 'Run a cache check', 'visigate' ); ?></a> — <?php esc_html_e( 'see which caches are active on this site and which pages they could get wrong.', 'visigate' ); ?></p>
 							<p class="description"><?php esc_html_e( 'Role, login and purchase-history rules need no exclusion because logged-in users already bypass most page caches.', 'visigate' ); ?></p>
 						</td>
 					</tr>
@@ -97,6 +98,7 @@ class Visigate_Admin {
 								<input type="checkbox" name="<?php echo esc_attr( self::OPTION ); ?>[view_as]" value="1" <?php checked( self::opt( 'view_as' ) ); ?>>
 								<?php esc_html_e( 'Add a "View as" menu to the admin bar to preview pages as a logged-out visitor, another role or another device, without logging out.', 'visigate' ); ?>
 							</label>
+							<p class="description"><?php esc_html_e( 'Also adds the rule inspector: a panel that shows which conditions passed or failed for every rule on the page, and why content was hidden.', 'visigate' ); ?></p>
 						</td>
 					</tr>
 				</table>
@@ -104,7 +106,7 @@ class Visigate_Admin {
 			</form>
 			<h2><?php esc_html_e( 'Developer reference', 'visigate' ); ?></h2>
 			<p><code>visigate_visible( $set_id_or_rules )</code> — <?php esc_html_e( 'check a rule set in PHP templates.', 'visigate' ); ?></p>
-			<p><code>visigate_conditions</code>, <code>visigate_check_condition</code>, <code>visigate_condition_options</code>, <code>visigate_rest_search</code>, <code>visigate_is_pro</code>, <code>visigate_hidden_block_output</code>, <code>visigate_hidden_shortcode_output</code>, <code>visigate_brand_name</code>, <code>visigate_user_can_manage</code>, <code>visigate_js_data</code> — <?php esc_html_e( 'filters.', 'visigate' ); ?></p>
+			<p><code>visigate_conditions</code>, <code>visigate_check_condition</code>, <code>visigate_condition_options</code>, <code>visigate_condition_groups</code>, <code>visigate_rest_search</code>, <code>visigate_device</code>, <code>visigate_missing_set_visible</code>, <code>visigate_is_pro</code>, <code>visigate_upgrade_url</code>, <code>visigate_hidden_block_output</code>, <code>visigate_hidden_shortcode_output</code>, <code>visigate_brand_name</code>, <code>visigate_base_capability</code>, <code>visigate_user_can_manage</code>, <code>visigate_js_data</code>, <code>visigate_usage_index</code>, <code>visigate_usage_describe</code>, <code>visigate_rules_subject</code>, <code>visigate_loop_template_blocks</code>, <code>visigate_page_types</code>, <code>visigate_target_exists</code>, <code>visigate_cache_detect</code> — <?php esc_html_e( 'filters.', 'visigate' ); ?></p>
 		</div>
 		<?php
 	}
@@ -132,6 +134,10 @@ class Visigate_Admin {
 				'no_value'    => $c['no_value'],
 				'key_label'   => $c['key_label'] ?? '',
 				'placeholder' => $c['placeholder'] ?? '',
+				'help'        => (string) ( $c['help'] ?? '' ),
+				'list'        => ! empty( $c['list'] ),
+				// Checks the current post or product, so it can follow a Query Loop item.
+				'item'        => ! empty( $c['item'] ),
 			);
 		}
 		$data = array(
@@ -146,6 +152,8 @@ class Visigate_Admin {
 			'newSetUrl'  => admin_url( 'post-new.php?post_type=' . Visigate_Ruleset::CPT ),
 			'canManage'  => current_user_can( visigate_capability() ),
 			'brand'      => visigate_brand(),
+			// Site-local "now" for rule warnings such as "this date range has ended".
+			'siteNow'    => current_datetime()->format( 'Y-m-d\TH:i' ),
 		);
 		return apply_filters( 'visigate_js_data', $data );
 	}

@@ -4,7 +4,7 @@ Tags: conditional content, visibility, elementor, block editor, personalization
 Requires at least: 6.2
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.5.2
+Stable tag: 1.5.3
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -27,6 +27,7 @@ https://www.youtube.com/watch?v=SIE5wlU_Eg0
 * Hide a sign-up prompt from people who are already logged in
 * Show a private note or download link to selected user accounts
 * Display a promotion only on a chosen post type, or only on archive pages
+* Show a search tip on search results and 404 pages, or a banner on every page under /shop/
 
 = Key features =
 
@@ -41,14 +42,17 @@ https://www.youtube.com/watch?v=SIE5wlU_Eg0
 * **Menu item visibility:** use a saved rule set or custom conditions on any classic menu item, such as hiding "Log in" from logged-in users. Navigation block links use the normal Visibility Rules panel.
 * **Where used:** see every page, pattern, template, menu item, widget and Elementor element that uses a rule set, and get a warning before you trash one that is in use.
 * **View as:** preview any page as a logged-out visitor, another role or another device from the admin bar, without logging out.
+* **"Why is this hidden?" inspector:** a panel on the live page lists every rule that ran, which conditions passed or failed, the final decision, whether fallback content was shown and whether the page was excluded from caching. Inspect mode marks each hidden item in place with its number. Only Visigate managers see it.
+* **Rule warnings:** the builder flags conditions that can never all be true, incomplete conditions, date ranges that have ended and selected posts, users or terms that were deleted. The block editor lists them again before you publish.
 * **Admin preview:** reveal hidden content on the live page, faded and outlined in red, to check your rules.
-* **Cache safety:** pages using specific user, device, URL parameter, cookie, referrer, or time rules can be flagged automatically so page cache plugins skip them.
+* **Cache safety:** pages using specific user, device, URL parameter, cookie, referrer, or time rules can be flagged automatically so page cache plugins skip them. On block themes Visigate also sends no-cache headers for server and CDN caches, and it tells LiteSpeed Cache directly.
+* **Cache check:** see which cache plugins and hosts are active, whether they honor Visigate's signal, which rule sets and pages a cached copy could get wrong, and test any page's cache headers.
 
 = Included conditions =
 
 * **User:** login status, user role, specific users, user capability, account age
 * **Visitor:** device type (desktop, tablet, mobile), URL parameter, cookie, referrer
-* **Page location:** categories and tags (including descendants), specific pages or posts, post type, and page view (singular or archive)
+* **Page location:** page type (homepage, blog index, search results, 404, author, date and other archives), URL path (exact, wildcard, "is or is inside" and contains), categories and tags (including descendants), specific pages or posts, post type, and page view (singular or archive)
 * **Time:** day of week, time of day, date range
 
 = Documentation =
@@ -81,9 +85,9 @@ Check a rule set in a theme template:
         // Show your content.
     }
 
-PHP filters: `visigate_conditions`, `visigate_check_condition`, `visigate_condition_options`, `visigate_rest_search`, `visigate_device`, `visigate_missing_set_visible`, `visigate_is_pro`, `visigate_upgrade_url`, `visigate_hidden_block_output`, `visigate_hidden_shortcode_output`, `visigate_brand_name`, `visigate_base_capability`, `visigate_user_can_manage`, `visigate_js_data`.
+PHP filters: `visigate_conditions`, `visigate_check_condition`, `visigate_condition_options`, `visigate_condition_groups`, `visigate_rest_search`, `visigate_device`, `visigate_missing_set_visible`, `visigate_is_pro`, `visigate_upgrade_url`, `visigate_hidden_block_output`, `visigate_hidden_shortcode_output`, `visigate_brand_name`, `visigate_base_capability`, `visigate_user_can_manage`, `visigate_js_data`, `visigate_usage_index`, `visigate_usage_describe`, `visigate_rules_subject`, `visigate_loop_template_blocks`, `visigate_page_types`, `visigate_target_exists`, `visigate_cache_detect`.
 
-JavaScript filters: `visigate.builder.extras`, `visigate.panel.extras`.
+JavaScript filters: `visigate.builder.extras`, `visigate.builder.warnings`, `visigate.panel.extras`.
 
 = Visigate Pro =
 
@@ -184,6 +188,16 @@ Yes. Visigate Pro is a separate plugin sold outside WordPress.org. This plugin d
 
 == Changelog ==
 
+= 1.5.3 =
+* New: "Why is this hidden?" inspector. While View as is active, or after choosing "Inspect rules on this page" in the admin bar, a panel lists every rule on the page with each condition marked passed, failed or ignored, the final decision, fallback content and page-cache status. Inspect mode labels hidden items in place.
+* New: rule warnings in the rule builder for contradictory conditions (for example logged in and logged out, or mobile and desktop in one group), incomplete conditions, skipped groups, impossible number or time ranges, ended date ranges, inactive add-on conditions and deleted or unpublished selections. The block editor lists blocks with warnings before you publish, and the Rule Sets list flags ended date ranges.
+* New: Page type condition: homepage, posts page, search results, 404, author, date, category, tag, custom taxonomy and post type archives, attachments and the privacy policy page.
+* New: URL path condition with exact match, * wildcards, "is or is inside", contains and their negatives. Works in subdirectory installs and in content loaded through admin-ajax.php.
+* New: Visigate → Cache Check: detected cache plugins and hosts, whether each honors Visigate's do-not-cache signal, rule sets and pages with visitor-specific conditions, and an on-demand cache header test.
+* Improved: pages with visitor-specific rules also send no-cache headers when possible (block themes) and notify LiteSpeed Cache through its API.
+* Improved: condition help text is shown in the builder.
+* Developers: `visigate_rules_subject`, `visigate_loop_template_blocks`, `visigate_condition_groups`, `visigate_page_types`, `visigate_target_exists` and `visigate_cache_detect` filters; `Visigate_Engine::with_subject()` and `Visigate_Frontend::evaluate()`.
+
 = 1.5.2 =
 * New: Always hide toggle in the shared rule builder. Hide content without conditions while preserving existing rules, in saved sets, blocks/patterns, classic menus and classic/atomic Elementor elements.
 * Improved: visitor-condition help text in the rule builder and teasers for Pro browser/IP targeting and Business IP ranges.
@@ -264,6 +278,9 @@ Pro conditions moved to the separate Visigate Pro add-on; unknown conditions now
 Initial release.
 
 == Upgrade Notice ==
+
+= 1.5.3 =
+Adds a rule inspector, rule warnings, page type and URL path conditions, and a Cache Check screen. Update Visigate before updating Visigate Pro 1.5.3.
 
 = 1.5.2 =
 Adds an Always hide switch to the rule builder and fixes backslashes being removed from rule set values. Update Visigate before updating Visigate Pro 1.5.2.

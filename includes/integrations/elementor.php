@@ -30,17 +30,50 @@ function visigate_elementor_setting( $element, $key ) {
 	return visigate_elementor_value( $element->get_settings( $key ) );
 }
 
+/** Inside a Loop Grid or Loop Carousel item the global post is that item; 0 on the page itself. */
+function visigate_elementor_loop_post() {
+	$id = (int) get_the_ID();
+	return ( $id && ( ! is_singular() || $id !== (int) get_queried_object_id() ) ) ? $id : 0;
+}
+
+/** Inspector key for one element (per loop item). */
+function visigate_elementor_key( $element ) {
+	$id = method_exists( $element, 'get_id' ) ? (string) $element->get_id() : '';
+	return 'elementor:' . $id . ':' . visigate_elementor_loop_post();
+}
+
 /** Saved and custom rules must both allow an element, matching the block editor. */
 function visigate_elementor_visible( $element ) {
-	$set = (int) visigate_elementor_setting( $element, 'visigate_set' );
-	if ( $set && ! Visigate_Engine::set_visible( $set ) ) {
-		return false;
+	$label = '';
+	$key   = '';
+	if ( class_exists( 'Visigate_Inspector' ) && Visigate_Inspector::recording() ) {
+		$name  = method_exists( $element, 'get_title' ) ? (string) $element->get_title() : '';
+		$name  = '' !== $name ? $name : ( method_exists( $element, 'get_name' ) ? (string) $element->get_name() : 'element' );
+		$label = sprintf(
+			/* translators: 1: Elementor element name, 2: element ID. */
+			__( 'Elementor %1$s (#%2$s)', 'visigate' ),
+			$name,
+			method_exists( $element, 'get_id' ) ? (string) $element->get_id() : ''
+		);
+		$key = visigate_elementor_key( $element );
 	}
-	$rules = visigate_elementor_setting( $element, 'visigate_rules' );
-	if ( is_string( $rules ) ) {
-		$rules = json_decode( $rules, true );
-	}
-	return ! is_array( $rules ) || Visigate_Engine::visible( $rules );
+	return Visigate_Frontend::evaluate(
+		'elementor',
+		$label,
+		$key,
+		visigate_elementor_loop_post(),
+		function () use ( $element ) {
+			$set = (int) visigate_elementor_setting( $element, 'visigate_set' );
+			if ( $set && ! Visigate_Engine::set_visible( $set ) ) {
+				return false;
+			}
+			$rules = visigate_elementor_setting( $element, 'visigate_rules' );
+			if ( is_string( $rules ) ) {
+				$rules = json_decode( $rules, true );
+			}
+			return ! is_array( $rules ) || Visigate_Engine::visible( $rules );
+		}
+	);
 }
 
 add_action(
@@ -141,10 +174,14 @@ $visigate_elementor_filter = function ( $should_render, $element ) {
 	if ( class_exists( '\Elementor\Plugin' ) && \Elementor\Plugin::$instance->editor && \Elementor\Plugin::$instance->editor->is_edit_mode() ) {
 		return $should_render;
 	}
+	$visible = visigate_elementor_visible( $element );
+	if ( $visible && class_exists( 'Visigate_Inspector' ) && Visigate_Inspector::recording() ) {
+		echo Visigate_Inspector::anchor( visigate_elementor_key( $element ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Safe HTML comment with int.
+	}
 	if ( Visigate_Frontend::preview_enabled() ) {
 		return $should_render;
 	}
-	return visigate_elementor_visible( $element );
+	return $visible;
 };
 
 // Elementor's element cache stores the HTML of "static" elements and reuses it for every visitor.

@@ -243,6 +243,65 @@
 		} );
 	}
 
+	// 2b. Rule warnings before publishing: lists blocks whose rules can never match, are incomplete,
+	// use an unpublished rule set or have a date range that has ended.
+	var prePublish = ( wp.editor && wp.editor.PluginPrePublishPanel ) || ( wp.editPost && wp.editPost.PluginPrePublishPanel );
+	var utils = window.VisigateBuilderUtils || {};
+	if ( prePublish && wp.plugins && wp.data && utils.warnings ) {
+		var blockTitle = function ( block ) {
+			var type = wp.blocks.getBlockType( block.name );
+			var meta = block.attributes.metadata || {};
+			return meta.name || ( type ? type.title : block.name );
+		};
+		var collectIssues = function ( blocks, out ) {
+			( blocks || [] ).forEach( function ( block ) {
+				var a = block.attributes || {};
+				var list = [];
+				var setId = parseInt( a.visigateSet, 10 ) || 0;
+				if ( setId && ! ( D.sets || [] ).some( function ( s ) { return s.id === setId; } ) ) {
+					list.push( { level: 'error', text: __( 'Its saved rule set is not published, so it is hidden from everyone.', 'visigate' ) } );
+				}
+				if ( a.visigateRules ) {
+					list = list.concat( utils.warnings( a.visigateRules ).filter( function ( w ) { return w.level !== 'info'; } ) );
+				}
+				if ( list.length ) {
+					out.push( { clientId: block.clientId, title: blockTitle( block ), warnings: list } );
+				}
+				if ( block.name !== 'core/block' ) {
+					collectIssues( block.innerBlocks, out );
+				}
+			} );
+			return out;
+		};
+		var PrePublishWarnings = function () {
+			var blocks = wp.data.useSelect( function ( select ) {
+				return select( 'core/block-editor' ).getBlocks();
+			}, [] );
+			var issues = collectIssues( blocks, [] );
+			if ( ! issues.length ) {
+				return null;
+			}
+			return el( prePublish, {
+				/* translators: %d: number of blocks */
+				title: wp.i18n.sprintf( __( 'Visibility rule warnings (%d)', 'visigate' ), issues.length ),
+				initialOpen: true,
+				icon: 'visibility',
+			},
+				el( 'p', null, __( 'Check these before publishing. You can still publish as is.', 'visigate' ) ),
+				el( 'ul', { className: 'vg-warnings' }, issues.map( function ( issue ) {
+					return el( 'li', { key: issue.clientId, className: 'vg-warning vg-warning--' + issue.warnings[ 0 ].level },
+						el( 'strong', null, issue.title ), ': ', issue.warnings.map( function ( w ) { return w.text; } ).join( ' ' ), ' ',
+						el( comp.Button, {
+							variant: 'link',
+							onClick: function () { wp.data.dispatch( 'core/block-editor' ).selectBlock( issue.clientId ); },
+						}, __( 'Select block', 'visigate' ) )
+					);
+				} ) )
+			);
+		};
+		wp.plugins.registerPlugin( 'visigate-prepublish-warnings', { render: PrePublishWarnings, icon: 'visibility' } );
+	}
+
 	addFilter( 'editor.BlockEdit', 'visigate/panel', createHOC( function ( BlockEdit ) {
 		return function ( props ) {
 			if ( ! props.isSelected ) {

@@ -25,12 +25,15 @@ class Visigate_Conditions {
 	private static $all = null;
 
 	public static function groups() {
-		return array(
-			'user'     => __( 'User', 'visigate' ),
-			'visitor'  => __( 'Visitor', 'visigate' ),
-			'location' => __( 'Page location', 'visigate' ),
-			'time'     => __( 'Time', 'visigate' ),
-			'woo'      => __( 'WooCommerce', 'visigate' ),
+		return apply_filters(
+			'visigate_condition_groups',
+			array(
+				'user'     => __( 'User', 'visigate' ),
+				'visitor'  => __( 'Visitor', 'visigate' ),
+				'location' => __( 'Page location', 'visigate' ),
+				'time'     => __( 'Time', 'visigate' ),
+				'woo'      => __( 'WooCommerce', 'visigate' ),
+			)
 		);
 	}
 
@@ -50,6 +53,22 @@ class Visigate_Conditions {
 		return apply_filters( 'visigate_condition_options', array(
 			'roles'    => $roles,
 			'post_types' => $post_types,
+			'page_types' => array(
+				'front_page'        => __( 'Homepage (front page)', 'visigate' ),
+				'posts_page'        => __( 'Posts page (blog index)', 'visigate' ),
+				'singular'          => __( 'Any single post or page', 'visigate' ),
+				'archive'           => __( 'Any archive', 'visigate' ),
+				'category'          => __( 'Category archive', 'visigate' ),
+				'tag'               => __( 'Tag archive', 'visigate' ),
+				'taxonomy'          => __( 'Custom taxonomy archive', 'visigate' ),
+				'post_type_archive' => __( 'Post type archive', 'visigate' ),
+				'author'            => __( 'Author archive', 'visigate' ),
+				'date'              => __( 'Date archive', 'visigate' ),
+				'search'            => __( 'Search results', 'visigate' ),
+				'404'               => __( '404 (not found) page', 'visigate' ),
+				'attachment'        => __( 'Attachment page', 'visigate' ),
+				'privacy_policy'    => __( 'Privacy policy page', 'visigate' ),
+			),
 			'devices'  => array(
 				'desktop' => __( 'Desktop', 'visigate' ),
 				'tablet'  => __( 'Tablet', 'visigate' ),
@@ -79,6 +98,7 @@ class Visigate_Conditions {
 			array( 'label' => __( 'ACF field', 'visigate' ), 'group' => 'location' ),
 			array( 'label' => __( 'Custom taxonomy', 'visigate' ), 'group' => 'location' ),
 			array( 'label' => __( 'Page/post ancestor', 'visigate' ), 'group' => 'location' ),
+			array( 'label' => __( 'Rule set (reusable audience)', 'visigate' ), 'group' => 'user' ),
 		);
 		if ( class_exists( 'WooCommerce' ) ) {
 			$woo = array(
@@ -98,6 +118,10 @@ class Visigate_Conditions {
 				__( 'Stock status (current product)', 'visigate' ),
 				__( 'Stock quantity (current product)', 'visigate' ),
 				__( 'Sale status (current product)', 'visigate' ),
+				__( 'Product category (current product)', 'visigate' ),
+				__( 'Price (current product)', 'visigate' ),
+				__( 'Featured (current product)', 'visigate' ),
+				__( 'Product type (current product)', 'visigate' ),
 			);
 			foreach ( $woo as $l ) {
 				$t[] = array( 'label' => $l, 'group' => 'woo' );
@@ -168,17 +192,34 @@ class Visigate_Conditions {
 
 			// ---- Page location ----------------------------------------------
 			'post_category_tag' => array(
-				'label' => __( 'Categories / tags (includes descendants)', 'visigate' ), 'group' => 'location', 'input' => 'async', 'source' => 'category_tag_terms', 'ops' => $in,
+				'label' => __( 'Categories / tags (includes descendants)', 'visigate' ), 'group' => 'location', 'input' => 'async', 'source' => 'category_tag_terms', 'ops' => $in, 'item' => true,
 			),
 			'specific_post'    => array(
-				'label' => __( 'Specific Page or Post', 'visigate' ), 'group' => 'location', 'input' => 'async', 'source' => 'posts', 'ops' => $in,
+				'label' => __( 'Specific Page or Post', 'visigate' ), 'group' => 'location', 'input' => 'async', 'source' => 'posts', 'ops' => $in, 'item' => true,
 			),
 			'post_type'        => array(
-				'label' => __( 'Post type', 'visigate' ), 'group' => 'location', 'input' => 'tokens', 'options' => 'post_types', 'ops' => $in,
+				'label' => __( 'Post type', 'visigate' ), 'group' => 'location', 'input' => 'tokens', 'options' => 'post_types', 'ops' => $in, 'item' => true,
 			),
 			'page_view'        => array(
 				'label' => __( 'Page view', 'visigate' ), 'group' => 'location', 'input' => 'none',
 				'ops'   => array( 'singular' => __( 'Singular', 'visigate' ), 'archive' => __( 'Archive', 'visigate' ) ),
+			),
+			'page_type'        => array(
+				'label' => __( 'Page type', 'visigate' ), 'group' => 'location', 'input' => 'tokens', 'options' => 'page_types', 'ops' => $in,
+				'help'  => __( 'Homepage, blog index, search results, 404, author and other archives. A page can be several types at once, e.g. a category archive is also "Any archive".', 'visigate' ),
+			),
+			'url_path'         => array(
+				'label' => __( 'URL path', 'visigate' ), 'group' => 'location', 'input' => 'text', 'list' => true,
+				'ops'   => array(
+					'is'           => __( 'is', 'visigate' ),
+					'not_is'       => __( 'is not', 'visigate' ),
+					'under'        => __( 'is or is inside', 'visigate' ),
+					'not_under'    => __( 'is not and is not inside', 'visigate' ),
+					'contains'     => __( 'contains', 'visigate' ),
+					'not_contains' => __( 'does not contain', 'visigate' ),
+				),
+				'placeholder' => '/shop/*, /landing/spring',
+				'help'  => __( 'Comma-separated paths, without the domain. Use * as a wildcard with "is". "is or is inside" /blog matches /blog and every page below it. Not case-sensitive; query strings are ignored.', 'visigate' ),
 			),
 
 			// ---- Time -------------------------------------------------------
@@ -204,7 +245,7 @@ class Visigate_Conditions {
 				array(
 					'label' => $key, 'group' => 'user', 'input' => 'none', 'pro' => false, 'dynamic' => false,
 					'days'  => false, 'options' => '', 'source' => '', 'no_value' => array(), 'ops' => array( 'is' => '' ),
-					'locked' => false, 'lock_label' => '',
+					'locked' => false, 'lock_label' => '', 'item' => false,
 				)
 			);
 			// Older Pro add-ons may still register these now-free conditions.
@@ -264,6 +305,10 @@ class Visigate_Conditions {
 			return $out;
 		}
 		$out['action'] = ( ( $rules['action'] ?? '' ) === 'hide' ) ? 'hide' : 'show';
+		// What location conditions check: the page (default) or each item of a Query Loop (add-ons).
+		if ( isset( $rules['scope'] ) && 'item' === $rules['scope'] ) {
+			$out['scope'] = 'item';
+		}
 		if ( isset( $rules['always_hide'] ) && in_array( $rules['always_hide'], array( true, 1, '1' ), true ) ) {
 			$out['always_hide'] = true;
 		}

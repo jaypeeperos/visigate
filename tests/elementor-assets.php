@@ -33,6 +33,7 @@ function wp_enqueue_style( $handle, $url, $deps, $version ) { $GLOBALS['styles']
 function wp_script_is( $handle, $status ) { return 'registered' === $status ? 'elementor-v2-editor-editing-panel' === $handle : isset( $GLOBALS['scripts'][ $handle ] ); }
 function wp_set_script_translations( $handle, $domain ) {}
 function wp_add_inline_script( $handle, $script, $position ) {}
+function current_datetime() { return new DateTimeImmutable( '2026-01-01 00:00:00' ); }
 class Visigate_Ruleset {
 	const CPT = 'visigate_set';
 	public static function all_sets() { return array(); }

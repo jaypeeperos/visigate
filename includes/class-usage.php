@@ -44,7 +44,7 @@ class Visigate_Usage {
 	}
 
 	public static function flush_meta( $meta_id, $object_id, $meta_key ) {
-		if ( in_array( $meta_key, array( '_elementor_data', Visigate_Menus::META ), true ) ) {
+		if ( in_array( $meta_key, array( '_elementor_data', Visigate_Menus::META, Visigate_Ruleset::META ), true ) ) {
 			self::flush();
 		}
 	}
@@ -270,6 +270,10 @@ class Visigate_Usage {
 				case 'menu':
 					/* translators: %d: count. */
 					$parts[] = sprintf( _n( '%d menu item', '%d menu items', $n, 'visigate' ), $n );
+					break;
+				case 'audience':
+					/* translators: %d: count. */
+					$parts[] = sprintf( _n( '%d "Rule set" condition', '%d "Rule set" conditions', $n, 'visigate' ), $n );
 					break;
 			}
 		}

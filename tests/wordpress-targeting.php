@@ -14,7 +14,7 @@ $GLOBALS['wp_filter']['pre_site_option_active_sitewide_plugins'][10][] = array(
 );
 require $argv[1];
 function vg_assert( $ok, $message ) { if ( ! $ok ) { throw new RuntimeException( $message ); } }
-vg_assert( defined( 'VISIGATE_VERSION' ) && '1.5.2' === VISIGATE_VERSION, 'Load the staged Free plugin' );
+vg_assert( defined( 'VISIGATE_VERSION' ) && '1.5.3' === VISIGATE_VERSION, 'Load the staged Free plugin' );
 wp_set_current_user( 0 );
 class Visigate_Pro_Plans {
 	const BUSINESS = 'business';

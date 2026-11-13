@@ -212,6 +212,9 @@ class Visigate_Ruleset {
 				esc_html_e( 'Always hidden', 'visigate' );
 				return;
 			}
+			foreach ( Visigate_Warnings::server_flags( $r ) as $flag ) {
+				echo '<span style="display:block;color:#b32d2e">⚠ ' . esc_html( $flag ) . '</span>';
+			}
 			if ( empty( $r['groups'] ) ) {
 				esc_html_e( 'No conditions (always visible)', 'visigate' );
 				return;

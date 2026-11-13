@@ -18,7 +18,7 @@ function absint( $v ) { return abs( (int) $v ); }
 function wp_doing_ajax() { return false; }
 function get_post( $id ) { return (object) array( 'post_type' => 'visigate_set', 'post_status' => 'draft' ); }
 class Visigate_Ruleset { const CPT = 'visigate_set'; }
-class Visigate_Frontend { public static function preview_enabled() { return $GLOBALS['preview']; } }
+class Visigate_Frontend { public static function preview_enabled() { return $GLOBALS['preview']; } public static function evaluate( $kind, $label, $key, $loop_post, $check ) { return $check(); } }
 require __DIR__ . '/../includes/class-menus.php';
 $rules = array( 'action' => 'show', 'groups' => array( array( 'conditions' => array( array( 'type' => 'url_param', 'op' => 'equals', 'value' => array( 'key' => 'source', 'value' => 'menu' ) ) ) ) ) );
 $_GET = array();

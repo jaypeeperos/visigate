@@ -3,7 +3,7 @@
  * Plugin Name:       Visigate – Conditional Content & Visibility Rules
  * Plugin URI:        https://persjay.com/plugins/visigate/
  * Description:       Show or hide any block, Elementor element or menu item by user, role, login status, device, URL parameter, cookie, referrer, page type, category, tag, or time. Visual rule builder, server-side evaluation, zero front-end JavaScript.
- * Version:           1.5.2
+ * Version:           1.5.3
  * Requires at least: 6.2
  * Requires PHP:      7.4
  * Author:            Jaypee Peros
@@ -15,7 +15,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'VISIGATE_VERSION', '1.5.2' );
+define( 'VISIGATE_VERSION', '1.5.3' );
 define( 'VISIGATE_FILE', __FILE__ );
 define( 'VISIGATE_DIR', plugin_dir_path( __FILE__ ) );
 define( 'VISIGATE_URL', plugin_dir_url( __FILE__ ) );
@@ -83,6 +83,9 @@ require_once VISIGATE_DIR . 'includes/class-admin.php';
 require_once VISIGATE_DIR . 'includes/class-menus.php';
 require_once VISIGATE_DIR . 'includes/class-usage.php';
 require_once VISIGATE_DIR . 'includes/class-view-as.php';
+require_once VISIGATE_DIR . 'includes/class-inspector.php';
+require_once VISIGATE_DIR . 'includes/class-warnings.php';
+require_once VISIGATE_DIR . 'includes/class-cache-check.php';
 require_once VISIGATE_DIR . 'includes/integrations/elementor.php';
 
 add_action(
@@ -104,5 +107,8 @@ add_action(
 		Visigate_Menus::init();
 		Visigate_Usage::init();
 		Visigate_View_As::init();
+		Visigate_Inspector::init();
+		Visigate_Warnings::init();
+		Visigate_Cache_Check::init();
 	}
 );

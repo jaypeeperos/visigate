@@ -19,3 +19,11 @@
 .vg-set-missing.components-notice{margin:0 0 12px}
 .vg-core-hidden.components-notice{margin:0 0 12px}
 .vg-core-hidden.components-notice p{margin:0 0 4px}
+
+/* Rule warnings */
+.vg-warnings { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+.vg-warning { margin: 0; padding: 6px 10px; border-radius: 4px; font-size: 12px; line-height: 1.45; border-left: 3px solid; }
+.vg-warning--error { background: #fcf0f1; border-color: #d63638; color: #8a2424; }
+.vg-warning--warning { background: #fcf9e8; border-color: #dba617; color: #614a00; }
+.vg-warning--info { background: #f0f6fc; border-color: #72aee6; color: #1d2327; }
+.vg-scope { padding: 8px 10px; background: #f6f7f7; border-radius: 4px; }
