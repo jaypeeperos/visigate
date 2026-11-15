@@ -193,7 +193,7 @@
 	}
 
 	/** Conditions that can only have one value per visit, so two "is any of" lists must overlap. */
-	var SINGLE_VALUE = [ 'device', 'weekday', 'post_type', 'specific_post', 'specific_user', 'country', 'browser', 'woo_billing_country', 'woo_shipping_country', 'woo_stock_status', 'woo_product_type' ];
+	var SINGLE_VALUE = [ 'device', 'weekday', 'post_type', 'specific_post', 'post_author', 'specific_user', 'country', 'browser', 'operating_system', 'woo_billing_country', 'woo_shipping_country', 'woo_stock_status', 'woo_product_type' ];
 	var ACCOUNT_TYPES = [ 'user_role', 'specific_user', 'capability', 'user_registered', 'user_meta' ];
 
 	function label( type ) {

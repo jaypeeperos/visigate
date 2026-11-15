@@ -91,11 +91,15 @@ class Visigate_Conditions {
 		$t = array(
 			array( 'label' => __( 'Country', 'visigate' ), 'group' => 'visitor' ),
 			array( 'label' => __( 'Browser', 'visigate' ), 'group' => 'visitor' ),
+			array( 'label' => __( 'Operating system', 'visigate' ), 'group' => 'visitor' ),
+			array( 'label' => __( 'Site language', 'visigate' ), 'group' => 'location' ),
 			array( 'label' => __( 'IP address', 'visigate' ), 'group' => 'visitor' ),
 			array( 'label' => __( 'IP range / CIDR (Business)', 'visigate' ), 'group' => 'visitor' ),
 			array( 'label' => __( 'User meta', 'visigate' ), 'group' => 'user' ),
 			array( 'label' => __( 'Post meta', 'visigate' ), 'group' => 'location' ),
 			array( 'label' => __( 'ACF field', 'visigate' ), 'group' => 'location' ),
+			array( 'label' => __( 'ACF options field', 'visigate' ), 'group' => 'location' ),
+			array( 'label' => __( 'ACF repeater row count', 'visigate' ), 'group' => 'location' ),
 			array( 'label' => __( 'Custom taxonomy', 'visigate' ), 'group' => 'location' ),
 			array( 'label' => __( 'Page/post ancestor', 'visigate' ), 'group' => 'location' ),
 			array( 'label' => __( 'Rule set (reusable audience)', 'visigate' ), 'group' => 'user' ),
@@ -108,6 +112,8 @@ class Visigate_Conditions {
 				__( 'Lifetime spend', 'visigate' ),
 				__( 'Cart contents', 'visigate' ),
 				__( 'Cart subtotal', 'visigate' ),
+				__( 'Cart weight (Business)', 'visigate' ),
+				__( 'Cart shipping class (Business)', 'visigate' ),
 				__( 'Active subscription', 'visigate' ),
 				__( 'Coupon used', 'visigate' ),
 				__( 'Shipping country', 'visigate' ),
@@ -191,6 +197,19 @@ class Visigate_Conditions {
 			),
 
 			// ---- Page location ----------------------------------------------
+			'post_author' => array(
+				'label' => __( 'Post author', 'visigate' ), 'group' => 'location', 'input' => 'async', 'source' => 'users', 'ops' => $in, 'item' => true,
+			),
+			'post_published_age' => array(
+				'label' => __( 'Published age (days)', 'visigate' ), 'group' => 'location', 'input' => 'number', 'item' => true,
+				'ops' => array( 'older' => __( 'is more than', 'visigate' ), 'newer' => __( 'is less than', 'visigate' ) ),
+				'help' => __( 'Elapsed days since publication. A cached page keeps the old result until the cache expires or is purged.', 'visigate' ),
+			),
+			'post_modified_age' => array(
+				'label' => __( 'Modified age (days)', 'visigate' ), 'group' => 'location', 'input' => 'number', 'item' => true,
+				'ops' => array( 'older' => __( 'is more than', 'visigate' ), 'newer' => __( 'is less than', 'visigate' ) ),
+				'help' => __( 'Elapsed days since the last modification. A cached page keeps the old result until the cache expires or is purged.', 'visigate' ),
+			),
 			'post_category_tag' => array(
 				'label' => __( 'Categories / tags (includes descendants)', 'visigate' ), 'group' => 'location', 'input' => 'async', 'source' => 'category_tag_terms', 'ops' => $in, 'item' => true,
 			),

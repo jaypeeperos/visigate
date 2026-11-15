@@ -4,7 +4,7 @@ Tags: conditional content, visibility, elementor, block editor, personalization
 Requires at least: 6.2
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.5.3
+Stable tag: 1.5.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -54,6 +54,7 @@ https://www.youtube.com/watch?v=SIE5wlU_Eg0
 * **Visitor:** device type (desktop, tablet, mobile), URL parameter, cookie, referrer
 * **Page location:** page type (homepage, blog index, search results, 404, author, date and other archives), URL path (exact, wildcard, "is or is inside" and contains), categories and tags (including descendants), specific pages or posts, post type, and page view (singular or archive)
 * **Time:** day of week, time of day, date range
+* **Current post:** author, published age in days, modified age in days. Age conditions change over time; cached pages keep their result until the cache expires or is purged.
 
 = Documentation =
 
@@ -188,6 +189,11 @@ Yes. Visigate Pro is a separate plugin sold outside WordPress.org. This plugin d
 
 == Changelog ==
 
+= 1.5.4 =
+* Added: Free post author, published age and modified age conditions, with cache-expiry guidance.
+* Added: Pro condition previews for ACF options, repeater row counts, site language, operating system, cart weight and shipping class.
+
+
 = 1.5.3 =
 * New: "Why is this hidden?" inspector. While View as is active, or after choosing "Inspect rules on this page" in the admin bar, a panel lists every rule on the page with each condition marked passed, failed or ignored, the final decision, fallback content and page-cache status. Inspect mode labels hidden items in place.
 * New: rule warnings in the rule builder for contradictory conditions (for example logged in and logged out, or mobile and desktop in one group), incomplete conditions, skipped groups, impossible number or time ranges, ended date ranges, inactive add-on conditions and deleted or unpublished selections. The block editor lists blocks with warnings before you publish, and the Rule Sets list flags ended date ranges.
@@ -278,6 +284,9 @@ Pro conditions moved to the separate Visigate Pro add-on; unknown conditions now
 Initial release.
 
 == Upgrade Notice ==
+
+= 1.5.4 =
+Adds post author and age rules. Update Free first, then Pro 1.5.4 for the new ACF, language, operating system and cart conditions.
 
 = 1.5.3 =
 Adds a rule inspector, rule warnings, page type and URL path conditions, and a Cache Check screen. Update Visigate before updating Visigate Pro 1.5.3.

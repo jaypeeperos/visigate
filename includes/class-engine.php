@@ -258,6 +258,26 @@ class Visigate_Engine {
 				$hit     = $post_id > 0 && in_array( (string) $post_id, array_map( 'strval', (array) $v ), true );
 				return ( 'is_any' === $op ) ? $hit : ! $hit;
 
+			case 'post_author':
+				$post = self::subject_id() ? get_post( self::subject_id() ) : null;
+				if ( ! $post || ! $post->post_author || ! is_array( $v ) || ! $v || ! in_array( $op, array( 'is_any', 'is_none' ), true ) ) {
+					return false;
+				}
+				foreach ( $v as $author ) {
+					if ( ! is_scalar( $author ) || ! ctype_digit( (string) $author ) || (int) $author < 1 ) { return false; }
+				}
+				$hit = in_array( (int) $post->post_author, array_map( 'intval', $v ), true );
+				return 'is_any' === $op ? $hit : ! $hit;
+
+			case 'post_published_age':
+			case 'post_modified_age':
+				$id = self::subject_id();
+				if ( ! $id || ! is_numeric( $v ) || $v < 0 || ! in_array( $op, array( 'older', 'newer' ), true ) ) { return false; }
+				$date = get_post_datetime( $id, 'post_modified_age' === $type ? 'modified' : 'date', 'gmt' );
+				if ( ! $date || $date->getTimestamp() > self::now()->getTimestamp() ) { return false; }
+				$age = ( self::now()->getTimestamp() - $date->getTimestamp() ) / DAY_IN_SECONDS;
+				return 'older' === $op ? $age > (float) $v : $age < (float) $v;
+
 			case 'post_type':
 				$post_types = array_map( 'strval', (array) $v );
 				if ( null !== self::subject() ) {
