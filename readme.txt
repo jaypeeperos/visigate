@@ -4,7 +4,7 @@ Tags: conditional content, visibility, elementor, block editor, personalization
 Requires at least: 6.2
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.5.4
+Stable tag: 1.5.5
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -188,6 +188,10 @@ Yes. Visigate Pro is a separate plugin sold outside WordPress.org. This plugin d
 11. A menu item with a Visigate rule set, so "Log in" shows only to logged-out visitors.
 
 == Changelog ==
+
+= 1.5.5 =
+* Fixed: Elementor rule controls, toggles, warnings and token chips now follow the editor light and dark themes consistently.
+* Fixed: Rule summaries skip empty condition descriptions instead of showing stray AND separators.
 
 = 1.5.4 =
 * Added: Free post author, published age and modified age conditions, with cache-expiry guidance.

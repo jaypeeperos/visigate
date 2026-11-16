@@ -150,7 +150,7 @@
 			return __( 'Always hidden — existing conditions are preserved until you turn this off.', 'visigate' );
 		}
 		var parts = rules.groups.map( function ( g ) {
-			return g.conditions.map( describeCond ).join( ' AND ' );
+			return g.conditions.map( describeCond ).filter( Boolean ).join( ' AND ' );
 		} ).filter( Boolean );
 		if ( ! parts.length ) {
 			return __( 'No conditions yet — content is always visible.', 'visigate' );

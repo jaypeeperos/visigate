@@ -37,29 +37,33 @@
 .vg-elementor-rules .vg-and,
 .vg-elementor-rules .vg-or { color: var(--e-a-color-txt-muted, #818a96); font-size: 10px; }
 
-/* Cover classic WordPress controls and newer InputControl wrappers. */
-.vg-elementor-rules .components-base-control { width: 100%; min-width: 0; margin: 0; }
-.vg-elementor-rules .components-base-control__field { margin-bottom: 0; }
-.vg-elementor-rules .components-base-control__label,
-.vg-elementor-rules .components-input-control__label,
-.vg-elementor-rules .components-form-token-field__label {
+/*
+ * Cover classic WordPress controls and newer InputControl wrappers.
+ * WordPress components style these with triple-class rules (.css-x.css-x.css-x),
+ * so these selectors need four classes to win.
+ */
+.vg-elementor-rules .vg-elementor-builder .vg-builder .components-base-control { width: 100%; min-width: 0; margin: 0; }
+.vg-elementor-rules .vg-elementor-builder .vg-builder .components-base-control__field { margin-bottom: 0; }
+.vg-elementor-rules .vg-elementor-builder .vg-builder .components-base-control__label,
+.vg-elementor-rules .vg-elementor-builder .vg-builder .components-input-control__label,
+.vg-elementor-rules .vg-elementor-builder .vg-builder .components-form-token-field__label {
 	color: inherit;
 	font-family: inherit;
 	font-size: 11px;
 	font-weight: 400;
 	text-transform: none;
 }
-.vg-elementor-rules .components-input-control__container {
+.vg-elementor-rules .vg-elementor-builder .vg-builder .components-input-control__container {
 	min-height: 28px;
 	border-radius: var(--e-a-border-radius, 3px);
 	background: transparent;
 	color: inherit;
 }
-.vg-elementor-rules .components-input-control__backdrop { border: 0; box-shadow: none; }
-.vg-elementor-rules .components-text-control__input,
-.vg-elementor-rules .components-select-control__input,
-.vg-elementor-rules .components-input-control__input,
-.vg-elementor-rules .components-textarea-control__input {
+.vg-elementor-rules .vg-elementor-builder .vg-builder .components-input-control__backdrop { border: 0; box-shadow: none; }
+.vg-elementor-rules .vg-elementor-builder .vg-builder .components-text-control__input,
+.vg-elementor-rules .vg-elementor-builder .vg-builder .components-select-control__input,
+.vg-elementor-rules .vg-elementor-builder .vg-builder .components-input-control__input,
+.vg-elementor-rules .vg-elementor-builder .vg-builder .components-textarea-control__input {
 	box-sizing: border-box;
 	width: 100%;
 	min-width: 0;
@@ -75,30 +79,31 @@
 	font-size: 12px;
 	line-height: 1.4;
 }
-.vg-elementor-rules .components-select-control__input {
+.vg-elementor-rules .vg-elementor-builder .vg-builder .components-text-control__input { height: 28px; }
+.vg-elementor-rules .vg-elementor-builder .vg-builder .components-select-control__input {
 	height: 28px;
 	padding-block: 3px;
 	padding-inline-end: 26px;
 }
-.vg-elementor-rules .components-select-control__input option {
+.vg-elementor-rules .vg-elementor-builder .vg-builder .components-select-control__input option {
 	background: var(--e-a-bg-default, #fff);
 	color: var(--e-a-color-txt, #515962);
 }
-.vg-elementor-rules .components-input-control__suffix,
-.vg-elementor-rules .components-select-control__arrow-wrapper { color: var(--e-a-color-txt-muted, #818a96); }
-.vg-elementor-rules .components-select-control__arrow-wrapper svg { fill: currentColor; }
-.vg-elementor-rules .components-text-control__input:focus,
-.vg-elementor-rules .components-select-control__input:focus,
-.vg-elementor-rules .components-input-control__input:focus,
-.vg-elementor-rules .components-textarea-control__input:focus {
+.vg-elementor-rules .vg-elementor-builder .vg-builder .components-input-control__suffix,
+.vg-elementor-rules .vg-elementor-builder .vg-builder .components-select-control__arrow-wrapper { color: var(--e-a-color-txt-muted, #818a96); }
+.vg-elementor-rules .vg-elementor-builder .vg-builder .components-select-control__arrow-wrapper svg { fill: currentColor; }
+.vg-elementor-rules .vg-elementor-builder .vg-builder .components-text-control__input:focus,
+.vg-elementor-rules .vg-elementor-builder .vg-builder .components-select-control__input:focus,
+.vg-elementor-rules .vg-elementor-builder .vg-builder .components-input-control__input:focus,
+.vg-elementor-rules .vg-elementor-builder .vg-builder .components-textarea-control__input:focus {
 	border-color: var(--e-a-border-color-focus, #818a96);
 	outline: none;
 	box-shadow: none;
 }
-.vg-elementor-rules input::placeholder,
-.vg-elementor-rules textarea::placeholder { color: var(--e-a-color-txt-muted, #818a96); opacity: 1; }
+.vg-elementor-rules .vg-elementor-builder .vg-builder input::placeholder,
+.vg-elementor-rules .vg-elementor-builder .vg-builder textarea::placeholder { color: var(--e-a-color-txt-muted, #818a96); opacity: 1; }
 
-.vg-elementor-rules .components-button {
+.vg-elementor-rules .vg-elementor-builder .vg-builder .components-button {
 	justify-content: center;
 	width: auto;
 	min-height: 28px;
@@ -116,29 +121,29 @@
 	white-space: normal;
 	transition: background-color .15s, border-color .15s, color .15s;
 }
-.vg-elementor-rules .components-button.is-secondary {
+.vg-elementor-rules .vg-elementor-builder .vg-builder .components-button.is-secondary {
 	border-color: var(--e-a-border-color-bold, #d5d8dc);
 	background: var(--e-a-bg-default, #fff);
 }
-.vg-elementor-rules .components-button.is-tertiary { padding: 4px; background: transparent; }
-.vg-elementor-rules .components-button:hover:not(:disabled) {
+.vg-elementor-rules .vg-elementor-builder .vg-builder .components-button.is-tertiary { padding: 4px; background: transparent; }
+.vg-elementor-rules .vg-elementor-builder .vg-builder .components-button:hover:not(:disabled) {
 	border-color: var(--e-a-border-color-bold, #d5d8dc);
 	background: var(--e-a-bg-hover, #f1f2f3);
 	box-shadow: none;
 	color: var(--e-a-color-txt-active, #0c0d0e);
 }
-.vg-elementor-rules .components-button:focus-visible {
+.vg-elementor-rules .vg-elementor-builder .vg-builder .components-button:focus-visible {
 	outline: 1px solid var(--e-a-color-primary-bold, #515962);
 	outline-offset: 2px;
 	box-shadow: none;
 }
-.vg-elementor-rules .components-button:disabled { opacity: .5; cursor: default; }
-.vg-elementor-rules .components-button.has-icon { flex-shrink: 0; min-width: 28px; padding: 4px; }
-.vg-elementor-rules .components-button.is-destructive { color: var(--e-a-color-txt-muted, #818a96); }
-.vg-elementor-rules .components-button.is-destructive:hover:not(:disabled) { color: var(--e-a-color-danger, #dc2626); }
+.vg-elementor-rules .vg-elementor-builder .vg-builder .components-button:disabled { opacity: .5; cursor: default; }
+.vg-elementor-rules .vg-elementor-builder .vg-builder .components-button.has-icon { flex-shrink: 0; min-width: 28px; padding: 4px; }
+.vg-elementor-rules .vg-elementor-builder .vg-builder .components-button.is-destructive { color: var(--e-a-color-txt-muted, #818a96); }
+.vg-elementor-rules .vg-elementor-builder .vg-builder .components-button.is-destructive:hover:not(:disabled) { color: var(--e-a-color-danger, #dc2626); }
 
 /* Search fields, chips and suggestions for role/user/product conditions. */
-.vg-elementor-rules .components-form-token-field__input-container {
+.vg-elementor-rules .vg-elementor-builder .vg-builder .components-form-token-field__input-container {
 	min-height: 28px;
 	margin: 0;
 	padding: 2px;
@@ -147,8 +152,8 @@
 	background: var(--e-a-bg-default, #fff);
 	box-shadow: none;
 }
-.vg-elementor-rules .components-form-token-field__input-container:focus-within { border-color: var(--e-a-border-color-focus, #818a96); box-shadow: none; }
-.vg-elementor-rules .components-form-token-field__input {
+.vg-elementor-rules .vg-elementor-builder .vg-builder .components-form-token-field__input-container:focus-within { border-color: var(--e-a-border-color-focus, #818a96); box-shadow: none; }
+.vg-elementor-rules .vg-elementor-builder .vg-builder .components-form-token-field__input {
 	min-width: 40px;
 	min-height: 24px;
 	padding: 2px 4px;
@@ -158,15 +163,15 @@
 	color: inherit;
 	font: inherit;
 }
-.vg-elementor-rules .components-form-token-field__token-text,
-.vg-elementor-rules .components-form-token-field__remove-token {
+.vg-elementor-rules .vg-elementor-builder .vg-builder .components-form-token-field__token-text,
+.vg-elementor-rules .vg-elementor-builder .vg-builder .components-form-token-field__remove-token {
 	background: var(--e-a-bg-chip, #e6e8ea);
 	color: var(--e-a-color-txt, #515962);
 	font-size: 11px;
 }
-.vg-elementor-rules .components-form-token-field__suggestions-list { background: var(--e-a-bg-default, #fff); color: inherit; }
-.vg-elementor-rules .components-form-token-field__suggestion.is-selected { background: var(--e-a-bg-active, #e6e8ea); color: inherit; }
-.vg-elementor-rules .components-base-control__help { color: var(--e-a-color-txt-muted, #818a96); font-size: 11px; }
+.vg-elementor-rules .vg-elementor-builder .vg-builder .components-form-token-field__suggestions-list { background: var(--e-a-bg-default, #fff); color: inherit; }
+.vg-elementor-rules .vg-elementor-builder .vg-builder .components-form-token-field__suggestion.is-selected { background: var(--e-a-bg-active, #e6e8ea); color: inherit; }
+.vg-elementor-rules .vg-elementor-builder .vg-builder .components-base-control__help { color: var(--e-a-color-txt-muted, #818a96); font-size: 11px; }
 
 .vg-elementor-rules .vg-summary {
 	margin: 0;
@@ -181,3 +186,75 @@
 }
 .vg-elementor-rules .vg-pro-note { color: var(--e-a-color-warning, #996800); font-size: 11px; line-height: 1.5; }
 .vg-elementor-rules .vg-cond--missing { color: var(--e-a-color-danger, #dc2626); }
+
+/* Pro "Check conditions against" box and rule warnings: follow Elementor's light/dark theme. */
+.vg-elementor-rules .vg-scope {
+	padding: 8px;
+	border-radius: var(--e-a-border-radius, 3px);
+	background: var(--e-a-bg-hover, #f1f2f3);
+	color: inherit;
+}
+.vg-elementor-rules .vg-warning {
+	padding: 6px 8px;
+	background: var(--e-a-bg-hover, #f1f2f3);
+	color: var(--e-a-color-txt, #515962);
+	font-size: 11px;
+}
+.vg-elementor-rules .vg-warning--error { border-color: var(--e-a-color-danger, #dc2626); }
+.vg-elementor-rules .vg-warning--warning { border-color: var(--e-a-color-warning, #f59e0b); }
+.vg-elementor-rules .vg-warning--info { border-color: var(--e-a-color-info, #2563eb); }
+
+/* Toggle ("Always hide"): WordPress draws a white track with a black thumb. */
+.vg-elementor-rules .vg-elementor-builder .vg-builder .components-form-toggle__track {
+	border-color: var(--e-a-border-color-bold, #d5d8dc);
+	background-color: var(--e-a-bg-default, #fff);
+}
+.vg-elementor-rules .vg-elementor-builder .vg-builder .components-form-toggle__thumb {
+	border-color: transparent;
+	background-color: var(--e-a-color-txt-muted, #818a96);
+}
+.vg-elementor-rules .vg-elementor-builder .vg-builder .components-form-toggle.is-checked .components-form-toggle__track {
+	border-color: var(--e-a-color-primary-bold, #515962);
+	background-color: var(--e-a-color-primary-bold, #515962);
+}
+.vg-elementor-rules .vg-elementor-builder .vg-builder .components-form-toggle.is-checked .components-form-toggle__thumb {
+	background-color: var(--e-a-bg-default, #fff);
+}
+.vg-elementor-rules .vg-elementor-builder .vg-builder .components-toggle-control__label { color: inherit; font-size: 12px; }
+.vg-elementor-rules .vg-elementor-builder .vg-builder .components-toggle-control__help { color: var(--e-a-color-txt-muted, #818a96); font-size: 11px; margin-top: 4px; }
+
+/* Locked (Pro / higher plan) selects. */
+.vg-elementor-rules .vg-elementor-builder .vg-builder .components-select-control__input:disabled { opacity: .6; cursor: default; }
+
+/* Condition help text and links. */
+.vg-elementor-rules .vg-cond .description { margin: 0; color: var(--e-a-color-txt-muted, #818a96); font-size: 11px; font-style: italic; line-height: 1.5; }
+.vg-elementor-rules a { color: var(--e-a-color-info, #2563eb); text-decoration: underline; }
+.vg-elementor-rules a:hover { color: var(--e-a-color-txt-active, #0c0d0e); }
+
+/* Native date/time pickers and select menus follow Elementor's dark theme. */
+.vg-elementor-rules { color-scheme: light; }
+:root:has(#e-theme-ui-dark-css:is([media="all"], :not([media]))) .vg-elementor-rules,
+:root:has(#elementor-editor-dark-mode-css:is([media="all"], :not([media]))) .vg-elementor-rules { color-scheme: dark; }
+@media (prefers-color-scheme: dark) {
+	:root:has(#e-theme-ui-dark-css[media*="dark"]) .vg-elementor-rules,
+	:root:has(#elementor-editor-dark-mode-css[media*="dark"]) .vg-elementor-rules { color-scheme: dark; }
+}
+
+/* Token chips: keep the remove (×) button chip-sized instead of a full panel button. */
+.vg-elementor-rules .vg-elementor-builder .vg-builder .components-form-token-field__token { align-items: center; }
+.vg-elementor-rules .vg-elementor-builder .vg-builder .components-form-token-field__token-text { height: 24px; line-height: 24px; }
+.vg-elementor-rules .vg-elementor-builder .vg-builder .components-button.components-form-token-field__remove-token {
+	display: inline-flex;
+	align-items: center;
+	min-width: 24px;
+	min-height: 24px;
+	height: 24px;
+	padding: 0 4px;
+	border: 0;
+	border-radius: 0 2px 2px 0;
+}
+.vg-elementor-rules .vg-elementor-builder .vg-builder .components-button.components-form-token-field__remove-token:hover:not(:disabled) {
+	border: 0;
+	background: var(--e-a-bg-active, #e6e8ea);
+	color: var(--e-a-color-danger, #dc2626);
+}
