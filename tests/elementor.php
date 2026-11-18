@@ -11,6 +11,10 @@ namespace Elementor {
 		public $controls = array();
 		public $settings = array();
 		public $sections = 0;
+		public $render_attributes = array();
+		public $children = array();
+		public function get_children() { return $this->children; }
+		public function add_render_attribute( $key, $attrs ) { $this->render_attributes[ $key ] = $attrs; }
 		public function get_controls( $key ) { return $this->controls[ $key ] ?? null; }
 		public function get_settings( $key ) { return $this->settings[ $key ] ?? null; }
 		public function start_controls_section( $id, $args ) { ++$this->sections; }
@@ -143,6 +147,52 @@ namespace {
 	check( $dynamic( false, array( 'settings' => $element->settings ) ), 'Custom rules must bypass element cache' );
 	check( ! $dynamic( false, array( 'settings' => array() ) ), 'Unruled elements may stay cached' );
 	check( $dynamic( true, array() ), 'Keep existing dynamic status' );
+	// A cached document can contain entry numbers from a different render order.
+	class Visigate_Inspector {
+		public static $recording = false;
+		public static $inspecting = false;
+		public static $parents = array();
+		public static function note_parent( $key, $parent ) { self::$parents[ $key ] = $parent; }
+		public static function recording() { return self::$recording; }
+		public static function marker( $key ) { return self::$inspecting ? '<span>Hidden: ' . $key . '</span>' : ''; }
+		public static function anchor( $key ) { return '<!--' . $key . '-->'; }
+		public static function number( $key ) { return 11; }
+		public static function tooltip( $key ) { return 'Hidden by Visigate'; }
+		public static function record_rules( $rules, $result ) {}
+	}
+	$cache_ttl = $hooks['pre_option_elementor_element_cache_ttl'];
+	check( false === $cache_ttl( false ), 'Normal requests fall through to the saved or default option' );
+	check( '24' === $cache_ttl( '24' ), 'Normal visitors retain Elementor caching' );
+	Visigate_Inspector::$recording = true;
+	check( 'disable' === $cache_ttl( false ), 'Inspection bypasses caching even when the option has never been saved' );
+	check( 'disable' === $cache_ttl( '24' ), 'Inspection bypasses reading and storing the document cache' );
+	check( 'disable' === $cache_ttl( 'disable' ), 'An already disabled cache stays disabled' );
+	Visigate_Inspector::$recording = false;
+	check( '24' === $cache_ttl( '24' ), 'Inspection does not change the saved cache setting' );
+	$element->settings = array( 'visigate_rules' => json_encode( rules( 'is' ) ) );
+	Visigate_Inspector::$inspecting = true;
+	ob_start();
+	check( ! $render( true, $element ), 'Inspecting keeps hidden content hidden' );
+	check( '<span>Hidden: elementor::0</span>' === ob_get_clean(), 'Free Elementor inspection prints a marker at the hidden element' );
+	Visigate_Inspector::$inspecting = false;
+	ob_start();
+	$render( true, $element );
+	check( '' === ob_get_clean(), 'Ordinary visitors do not receive hidden markers' );
+	$preview = true;
+	Visigate_Inspector::$recording = true;
+	ob_start();
+	check( $render( true, $element ), 'Preview renders hidden Elementor content' );
+	check( '<!--elementor::0-->' === ob_get_clean(), 'Revealed content receives its own anchor' );
+	check( 11 === $element->render_attributes['_wrapper']['data-visigate-entry'], 'Preview binds the inspector entry to the actual Elementor wrapper' );
+	check( 'visigate-preview-hidden' === $element->render_attributes['_wrapper']['class'], 'Revealed Elementor content is marked as hidden in preview' );
+	$element->children = array( new class extends \Elementor\Element_Base { public function get_id() { return 'child'; } } );
+	ob_start();
+	$render( true, $element );
+	ob_end_clean();
+	check( 'elementor::0' === Visigate_Inspector::$parents['elementor:child:0'], 'Elementor links recorded children to their evaluated parent' );
+	$element->children = array();
+	Visigate_Inspector::$recording = false;
+	$preview = false;
 	// Atomic typed props must behave like classic values, including disabled props.
 	$typed = function ( $value, $disabled = false ) { return array( '$$type' => 'string', 'value' => $value, 'disabled' => $disabled ); };
 	$element->settings = array( 'visigate_set' => $typed( '1' ), 'visigate_rules' => $typed( json_encode( rules( 'is' ) ) ) );

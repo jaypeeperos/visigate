@@ -4,7 +4,7 @@ Tags: conditional content, visibility, elementor, block editor, personalization
 Requires at least: 6.2
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.5.5
+Stable tag: 1.5.6
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -188,6 +188,12 @@ Yes. Visigate Pro is a separate plugin sold outside WordPress.org. This plugin d
 11. A menu item with a Visigate rule set, so "Log in" shows only to logged-out visitors.
 
 == Changelog ==
+
+= 1.5.6 =
+* Fix: Elementor inspection and admin preview bypass cached document HTML so inspector entries locate the correct elements, including when the cache setting has never been saved.
+* Fix: hidden Elementor elements receive an inspect marker, and revealed elements receive their own preview target and styling.
+* Fix: children of hidden Elementor containers show "Hidden by parent", identify the hidden container and locate its marker when the child is not rendered.
+* Fix: admin preview outlines a hidden block on the block itself instead of wrapping it, so full-width and wide blocks keep their width and navigation menu items stay valid list markup.
 
 = 1.5.5 =
 * Fixed: Elementor rule controls, toggles, warnings and token chips now follow the editor light and dark themes consistently.

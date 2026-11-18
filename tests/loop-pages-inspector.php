@@ -236,6 +236,21 @@ if ( 'pro' !== $mode ) {
 	expect( '<!--visigate-entry:1-->' === Visigate_Inspector::anchor( 'k1' ) && '' === Visigate_Inspector::anchor( 'unknown' ), 'HTML comment anchor generated for recorded entries' );
 	expect( false !== strpos( Visigate_Inspector::preview_attrs( 'k1' ), 'data-visigate-entry="1"' ), 'Preview attributes attach entry number and tooltip' );
 
+	// Children finish rendering before a hidden parent discards their HTML.
+	foreach ( array( 'child' => true, 'inner' => false, 'outer' => false, 'sibling' => true ) as $key => $visible ) {
+		Visigate_Inspector::begin( array( 'key' => $key, 'kind' => 'elementor', 'label' => $key ) );
+		Visigate_Inspector::end( $visible );
+	}
+	Visigate_Inspector::note_parent( 'child', 'inner' );
+	Visigate_Inspector::note_parent( 'inner', 'outer' );
+	$inherited = array_column( Visigate_Inspector::entries(), null, 'label' );
+	expect( $inherited['child']['visible'] && $inherited['outer']['n'] === $inherited['child']['hidden_parent'], 'A passing child is suppressed by the outermost hidden ancestor whose marker survives' );
+	expect( 'outer' === $inherited['child']['hidden_parent_label'], 'The child explanation identifies its hidden ancestor' );
+	expect( ! isset( $inherited['sibling']['hidden_parent'] ), 'Unrelated siblings do not inherit hidden status' );
+	Visigate_Inspector::note_parent( 'inner', 'sibling' );
+	$inherited = array_column( Visigate_Inspector::entries(), null, 'label' );
+	expect( $inherited['inner']['n'] === $inherited['child']['hidden_parent'], 'A visible outer parent does not override a hidden inner parent' );
+
 	// Two dynamic/container blocks with identical attrs and empty innerHTML must not collide in the inspector.
 	require __DIR__ . '/../includes/class-cache-check.php';
 	$entries_prop = new ReflectionProperty( 'Visigate_Inspector', 'entries' );

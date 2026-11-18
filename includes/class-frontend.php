@@ -316,6 +316,55 @@ class Visigate_Frontend {
 	}
 
 	/**
+	 * Admin preview for a hidden block: outline the block's own root element so
+	 * full-width and wide alignment, layout rules and list markup keep working.
+	 * Output with several top-level elements falls back to preview_wrap().
+	 *
+	 * @param string $html Block HTML that is hidden from the current visitor.
+	 * @param string $key  Inspector entry key.
+	 */
+	private static function preview_mark( $html, $key = '' ) {
+		if ( ! class_exists( 'WP_HTML_Tag_Processor' ) || 0 !== strpos( ltrim( $html ), '<' ) || self::multiple_roots( $html ) ) {
+			return self::preview_wrap( $html, $key );
+		}
+		$p = new WP_HTML_Tag_Processor( $html );
+		if ( ! $p->next_tag() ) {
+			return self::preview_wrap( $html, $key );
+		}
+		$recording = '' !== $key && class_exists( 'Visigate_Inspector' ) && Visigate_Inspector::recording();
+		$n         = $recording ? Visigate_Inspector::number( $key ) : 0;
+		$p->add_class( 'visigate-preview-hidden' );
+		$p->set_attribute( 'title', $recording ? Visigate_Inspector::tooltip( $key ) : __( 'Hidden from this visitor by Visigate', 'visigate' ) );
+		if ( $n > 0 ) {
+			$p->set_attribute( 'data-visigate-entry', (string) $n );
+		}
+		$style = rtrim( trim( (string) $p->get_attribute( 'style' ) ), ';' );
+		$p->set_attribute( 'style', ( '' !== $style ? $style . ';' : '' ) . 'outline:2px dashed #d63638;outline-offset:2px;opacity:.5' );
+		return $p->get_updated_html();
+	}
+
+	/** True when the HTML clearly has more than one top-level element. */
+	private static function multiple_roots( $html ) {
+		$void  = array( 'AREA', 'BASE', 'BR', 'COL', 'EMBED', 'HR', 'IMG', 'INPUT', 'LINK', 'META', 'SOURCE', 'TRACK', 'WBR' );
+		$p     = new WP_HTML_Tag_Processor( $html );
+		$depth = 0;
+		$roots = 0;
+		while ( $p->next_tag( array( 'tag_closers' => 'visit' ) ) ) {
+			if ( $p->is_tag_closer() ) {
+				$depth = max( 0, $depth - 1 );
+				continue;
+			}
+			if ( 0 === $depth && ++$roots > 1 ) {
+				return true;
+			}
+			if ( ! in_array( $p->get_tag(), $void, true ) ) {
+				++$depth;
+			}
+		}
+		return false;
+	}
+
+	/**
 	 * Output for a [visigate] shortcode whose content is hidden: the fallback, or the
 	 * revealed content while an administrator is using admin preview.
 	 *
@@ -344,7 +393,7 @@ class Visigate_Frontend {
 		$key       = self::block_hash( $block ) . ':' . (int) $loop_post;
 		$anchor    = ( $visible && class_exists( 'Visigate_Inspector' ) && Visigate_Inspector::recording() ) ? Visigate_Inspector::anchor( $key ) : '';
 		if ( self::preview_enabled() ) {
-			return $visible ? $anchor . $content : self::preview_wrap( $content, $key );
+			return $visible ? $anchor . $content : self::preview_mark( $content, $key );
 		}
 		return $visible ? $anchor . $content : self::hidden_block_output( $block, $loop_post );
 	}

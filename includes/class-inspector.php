@@ -319,9 +319,31 @@ class Visigate_Inspector {
 		}
 	}
 
-	/** Recorded checks (for tests and add-ons). */
+	/** Link a recorded child to its parent after Elementor has evaluated both. */
+	public static function note_parent( $key, $parent ) {
+		if ( $key !== $parent && isset( self::$entries[ $key ], self::$entries[ $parent ] ) ) {
+			self::$entries[ $key ]['parent'] = $parent;
+		}
+	}
+
+	/** Recorded checks, including whether a hidden ancestor suppresses the content. */
 	public static function entries() {
-		return array_values( self::$entries );
+		$entries = self::$entries;
+		foreach ( $entries as $key => &$entry ) {
+			$seen = array( $key => true );
+			$cur  = $entry['parent'] ?? null;
+			while ( null !== $cur && isset( $entries[ $cur ] ) && ! isset( $seen[ $cur ] ) ) {
+				$seen[ $cur ] = true;
+				if ( ! $entries[ $cur ]['visible'] ) {
+					// Use the outermost hidden ancestor: its marker survives rendering.
+					$entry['hidden_parent'] = $entries[ $cur ]['n'];
+					$entry['hidden_parent_label'] = $entries[ $cur ]['label'];
+				}
+				$cur = $entries[ $cur ]['parent'] ?? null;
+			}
+		}
+		unset( $entry );
+		return array_values( $entries );
 	}
 
 	/* ------------------------------ explaining ------------------------------ */
@@ -487,10 +509,10 @@ class Visigate_Inspector {
 		if ( ! self::panel_active() ) {
 			return;
 		}
-		$entries = array_values( self::$entries );
+		$entries = self::entries();
 		$hidden  = 0;
 		foreach ( $entries as $e ) {
-			$hidden += $e['visible'] ? 0 : 1;
+			$hidden += $e['visible'] && empty( $e['hidden_parent'] ) ? 0 : 1;
 		}
 		$reasons = Visigate_Engine::dynamic_reasons();
 		?>
@@ -561,12 +583,14 @@ class Visigate_Inspector {
 					<p style="margin:0"><?php esc_html_e( 'No visibility rules ran on this page.', 'visigate' ); ?></p>
 				<?php endif; ?>
 				<?php foreach ( $entries as $e ) : ?>
-					<div class="vgi-entry" data-vgi-entry="<?php echo (int) $e['n']; ?>" title="<?php esc_attr_e( 'Click to locate on page', 'visigate' ); ?>">
+					<div class="vgi-entry" data-vgi-entry="<?php echo (int) $e['n']; ?>" data-vgi-parent="<?php echo (int) ( $e['hidden_parent'] ?? 0 ); ?>" title="<?php esc_attr_e( 'Click to locate on page', 'visigate' ); ?>">
 						<div class="vgi-head">
 							<strong>#<?php echo (int) $e['n']; ?> <?php echo esc_html( '' !== $e['label'] ? $e['label'] : __( 'Content', 'visigate' ) ); ?></strong>
-							<span class="vgi-badge <?php echo $e['visible'] ? 'vgi-shown' : 'vgi-hidden'; ?>">
+							<span class="vgi-badge <?php echo $e['visible'] && empty( $e['hidden_parent'] ) ? 'vgi-shown' : 'vgi-hidden'; ?>">
 								<?php
-								if ( $e['visible'] ) {
+								if ( ! empty( $e['hidden_parent'] ) ) {
+									esc_html_e( 'Hidden by parent', 'visigate' );
+								} elseif ( $e['visible'] ) {
 									esc_html_e( 'Shown', 'visigate' );
 								} elseif ( $e['fallback'] ) {
 									esc_html_e( 'Hidden · fallback shown', 'visigate' );
@@ -576,6 +600,14 @@ class Visigate_Inspector {
 								?>
 							</span>
 						</div>
+						<?php if ( ! empty( $e['hidden_parent'] ) ) : ?>
+							<div class="vgi-muted">
+								<?php
+								/* translators: 1: parent entry number, 2: parent element label. */
+								echo esc_html( sprintf( __( 'Hidden because parent #%1$d %2$s is hidden.', 'visigate' ), $e['hidden_parent'], '' !== $e['hidden_parent_label'] ? $e['hidden_parent_label'] : __( 'Content', 'visigate' ) ) );
+								?>
+							</div>
+						<?php endif; ?>
 						<?php if ( $e['loop_post'] ) : ?>
 							<div class="vgi-muted">
 								<?php
@@ -673,7 +705,8 @@ class Visigate_Inspector {
 				if (!row) return;
 				var n = row.getAttribute('data-vgi-entry');
 				selectEntry(n, false);
-				var t = findTarget(n);
+				var parent = row.getAttribute('data-vgi-parent');
+				var t = findTarget(n) || (parent && parent !== '0' ? findTarget(parent) : null);
 				var prevNote = row.querySelector('.vgi-unlocatable');
 				if (prevNote) prevNote.remove();
 				if (t) {
@@ -681,7 +714,7 @@ class Visigate_Inspector {
 				} else {
 					var note = document.createElement('div');
 					note.className = 'vgi-unlocatable';
-					note.textContent = <?php echo wp_json_encode( __( 'Not rendered on the page — turn on inspect mode below to mark hidden items in place.', 'visigate' ) ); ?>;
+					note.textContent = <?php echo wp_json_encode( self::inspecting() ? __( 'Not rendered on the page — no marker is available for this item.', 'visigate' ) : __( 'Not rendered on the page — turn on inspect mode below to mark hidden items in place.', 'visigate' ) ); ?>;
 					row.appendChild(note);
 				}
 			});

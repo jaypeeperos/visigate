@@ -175,14 +175,45 @@ $visigate_elementor_filter = function ( $should_render, $element ) {
 		return $should_render;
 	}
 	$visible = visigate_elementor_visible( $element );
-	if ( $visible && class_exists( 'Visigate_Inspector' ) && Visigate_Inspector::recording() ) {
-		echo Visigate_Inspector::anchor( visigate_elementor_key( $element ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Safe HTML comment with int.
+	// Elementor evaluates children before deciding whether their parent renders.
+	if ( class_exists( 'Visigate_Inspector' ) && Visigate_Inspector::recording() && method_exists( $element, 'get_children' ) ) {
+		foreach ( $element->get_children() as $child ) {
+			Visigate_Inspector::note_parent( visigate_elementor_key( $child ), visigate_elementor_key( $element ) );
+		}
 	}
-	if ( Visigate_Frontend::preview_enabled() ) {
+	$preview = Visigate_Frontend::preview_enabled();
+	if ( ( $visible || $preview ) && class_exists( 'Visigate_Inspector' ) && Visigate_Inspector::recording() ) {
+		echo Visigate_Inspector::anchor( visigate_elementor_key( $element ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Safe HTML comment with int.
+		if ( ! $visible && $preview && method_exists( $element, 'add_render_attribute' ) ) {
+			$key = visigate_elementor_key( $element );
+			$element->add_render_attribute( '_wrapper', array(
+				'class'               => 'visigate-preview-hidden',
+				'data-visigate-entry' => Visigate_Inspector::number( $key ),
+				'title'               => Visigate_Inspector::tooltip( $key ),
+				'style'               => 'outline:2px dashed #d63638;outline-offset:2px;opacity:.5;',
+			) );
+		}
+	}
+	if ( $preview ) {
 		return $should_render;
+	}
+	// The Pro add-on prints its own marker alongside any fallback content.
+	if ( ! $visible && class_exists( 'Visigate_Inspector' ) && ! class_exists( 'Visigate_Pro_Elementor_Fallback' ) ) {
+		echo Visigate_Inspector::marker( visigate_elementor_key( $element ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped in marker().
 	}
 	return $visible;
 };
+
+// Elementor caches entire documents, including the inspector's request-local entry
+// numbers. Render fresh while recording, without reading or storing that cache.
+// This is a request-only override; the site's saved cache setting stays intact.
+add_filter(
+	'pre_option_elementor_element_cache_ttl',
+	function ( $pre ) {
+		// pre_option also runs when the setting does not exist (the default case).
+		return class_exists( 'Visigate_Inspector' ) && Visigate_Inspector::recording() ? 'disable' : $pre;
+	}
+);
 
 // Elementor's element cache stores the HTML of "static" elements and reuses it for every visitor.
 // Elements with saved or custom rules must render fresh per visitor.
