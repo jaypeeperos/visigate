@@ -57,7 +57,7 @@ class Visigate_Inspector {
 		if ( ! did_action( 'init' ) ) {
 			return false; // Do not lock in a decision before the user is known.
 		}
-		$on = self::allowed() && ( self::inspecting() || Visigate_View_As::is_active() || ( class_exists( 'Visigate_Frontend' ) && Visigate_Frontend::preview_enabled() ) );
+		$on = self::allowed() && ( self::data_request() || self::inspecting() || Visigate_View_As::is_active() || ( class_exists( 'Visigate_Frontend' ) && Visigate_Frontend::preview_enabled() ) );
 		if ( did_action( 'wp' ) ) {
 			self::$on = $on;
 		}
@@ -66,7 +66,15 @@ class Visigate_Inspector {
 
 	/** Should the bottom inspector panel (with inline CSS/JS) be rendered? */
 	public static function panel_active() {
-		return self::allowed() && ( self::inspecting() || Visigate_View_As::is_active() );
+		return self::allowed() && ( self::data_request() || self::inspecting() || Visigate_View_As::is_active() );
+	}
+
+	/**
+	 * Background load from the View As screen ("Inspect here"): record the checks for this one request,
+	 * even when nothing is simulated. Managers only (allowed()); it changes nothing and sets no cookie.
+	 */
+	public static function data_request() {
+		return isset( $_GET['visigate_inspect_data'] ) && self::allowed(); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 	}
 
 	/** Entry number (`n`) for a content key, or 0 when not recorded. */
@@ -515,6 +523,7 @@ class Visigate_Inspector {
 			$hidden += $e['visible'] && empty( $e['hidden_parent'] ) ? 0 : 1;
 		}
 		$reasons = Visigate_Engine::dynamic_reasons();
+		self::print_data( $entries );
 		?>
 		<style>
 		#visigate-inspector{position:fixed;left:12px;bottom:12px;z-index:99999;max-width:min(560px,calc(100vw - 24px));font:13px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif;color:#1d2327;text-align:left}
@@ -764,6 +773,50 @@ class Visigate_Inspector {
 		})();
 		</script>
 		<?php
+	}
+
+	/**
+	 * The same checks as machine-readable JSON, for the View As screen in wp-admin, which loads the
+	 * page in the background and draws its own inspector. Printed only where the panel is (managers).
+	 */
+	private static function print_data( $entries ) {
+		$out = array();
+		foreach ( $entries as $e ) {
+			$parts = array();
+			$sets  = array();
+			foreach ( (array) $e['parts'] as $part ) {
+				$sets[]  = (string) $part['title'];
+				$groups  = array();
+				foreach ( (array) ( $part['groups'] ?? array() ) as $g ) {
+					$conds = array();
+					foreach ( (array) $g['conditions'] as $row ) {
+						$conds[] = array( 'text' => (string) $row['text'], 'pass' => $row['pass'] );
+					}
+					$groups[] = array( 'conditions' => $conds, 'matched' => ! empty( $g['matched'] ) );
+				}
+				$parts[] = array(
+					'always_hide' => ! empty( $part['always_hide'] ),
+					'note'        => (string) ( $part['note'] ?? '' ),
+					'result'      => ! empty( $part['result'] ),
+					'groups'      => $groups,
+				);
+			}
+			$note = '';
+			if ( ! empty( $e['hidden_parent'] ) ) {
+				/* translators: %s: label of the hidden content that contains this one. */
+				$note = sprintf( __( 'Inside hidden content: %s', 'visigate' ), (string) ( $e['hidden_parent_label'] ?? '' ) );
+			}
+			$out[] = array(
+				'n'       => (int) $e['n'],
+				'kind'    => (string) $e['kind'],
+				'label'   => (string) $e['label'],
+				'visible' => $e['visible'] && empty( $e['hidden_parent'] ),
+				'sets'    => array_values( array_unique( $sets ) ),
+				'parts'   => $parts,
+				'note'    => $note,
+			);
+		}
+		echo '<script type="application/json" id="visigate-inspector-data">' . wp_json_encode( $out, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE ) . '</script>';
 	}
 
 	private static function render_part( $part ) {

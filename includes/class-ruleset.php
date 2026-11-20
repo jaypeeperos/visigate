@@ -207,29 +207,7 @@ class Visigate_Ruleset {
 			echo '<code>[visigate set="' . (int) $post_id . '"]</code>';
 		}
 		if ( 'visigate_rule' === $col ) {
-			$r = get_post_meta( $post_id, self::META, true );
-			if ( ! empty( $r['always_hide'] ) ) {
-				esc_html_e( 'Always hidden', 'visigate' );
-				return;
-			}
-			foreach ( Visigate_Warnings::server_flags( $r ) as $flag ) {
-				echo '<span style="display:block;color:#b32d2e">⚠ ' . esc_html( $flag ) . '</span>';
-			}
-			if ( empty( $r['groups'] ) ) {
-				esc_html_e( 'No conditions (always visible)', 'visigate' );
-				return;
-			}
-			$n = 0;
-			foreach ( $r['groups'] as $g ) {
-				$n += count( $g['conditions'] ?? array() );
-			}
-			printf(
-				/* translators: 1: Show/Hide, 2: condition count, 3: group count */
-				esc_html__( '%1$s — %2$d condition(s) in %3$d group(s)', 'visigate' ),
-				'hide' === ( $r['action'] ?? 'show' ) ? esc_html__( 'Hide when', 'visigate' ) : esc_html__( 'Show when', 'visigate' ),
-				(int) $n,
-				count( $r['groups'] )
-			);
+			Visigate_Admin_UI::rule_cell( $post_id );
 		}
 	}
 

@@ -322,88 +322,161 @@ class Visigate_Usage {
 		if ( $set && Visigate_Ruleset::CPT !== $set->post_type ) {
 			$set = null;
 		}
-		echo '<div class="wrap visigate-usage">';
+		$refreshed = isset( $_GET['refreshed'] );
+		$kind      = isset( $_GET['kind'] ) ? sanitize_key( wp_unslash( $_GET['kind'] ) ) : '';
+		$kind      = in_array( $kind, array( 'block', 'elementor', 'menu', 'shortcode' ), true ) ? $kind : '';
+		$group     = isset( $_GET['group'] ) && 'page' === $_GET['group'] ? 'page' : 'set';
+		// phpcs:enable
+		echo '<div class="wrap vg-wrap vg-page visigate-usage">';
 		if ( $set ) {
 			/* translators: %s: rule set title. */
-			echo '<h1 class="wp-heading-inline">' . esc_html( sprintf( __( 'Where “%s” is used', 'visigate' ), $set->post_title ? $set->post_title : '#' . $set->ID ) ) . '</h1> ';
-			echo '<a class="page-title-action" href="' . esc_url( (string) get_edit_post_link( $set->ID ) ) . '">' . esc_html__( 'Edit rule set', 'visigate' ) . '</a> ';
-			echo '<a class="page-title-action" href="' . esc_url( self::usage_url() ) . '">' . esc_html__( 'All rule sets', 'visigate' ) . '</a>';
+			echo '<h1 class="vg-sr">' . esc_html( sprintf( __( 'Where “%s” is used', 'visigate' ), $set->post_title ? $set->post_title : '#' . $set->ID ) ) . '</h1>';
 		} else {
-			echo '<h1>' . esc_html__( 'Rule Set Usage', 'visigate' ) . '</h1>';
+			echo '<h1 class="vg-sr">' . esc_html__( 'Rule Set Usage', 'visigate' ) . '</h1>';
 		}
 		echo '<hr class="wp-header-end">';
-		if ( isset( $_GET['refreshed'] ) ) {
+		if ( $refreshed ) {
 			echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Usage list refreshed.', 'visigate' ) . '</p></div>';
 		}
-		// phpcs:enable
+
+		if ( ! $set ) {
+			$totals = Visigate_Admin_UI::usage_totals();
+			$tiles  = array(
+				''          => array( __( 'All places', 'visigate' ), $totals['places'] ),
+				'block'     => array( __( 'Blocks', 'visigate' ), $totals['kinds']['block'] ),
+				'elementor' => array( __( 'Elementor elements', 'visigate' ), $totals['kinds']['elementor'] ),
+				'menu'      => array( __( 'Menu items', 'visigate' ), $totals['kinds']['menu'] ),
+				'shortcode' => array( __( 'Shortcodes', 'visigate' ), $totals['kinds']['shortcode'] ),
+			);
+			echo '<nav class="vg-stats" aria-label="' . esc_attr__( 'Filter by type', 'visigate' ) . '">';
+			foreach ( $tiles as $k => $t ) {
+				$on   = $k === $kind;
+				$href = add_query_arg( array_filter( array( 'kind' => $k, 'group' => 'page' === $group ? 'page' : '' ) ), self::usage_url() );
+				echo '<a class="vg-stat' . ( $on ? ' is-solid' : '' ) . '" href="' . esc_url( $href ) . '"' . ( $on ? ' aria-current="true"' : '' ) . '><span class="vg-stat-label">' . esc_html( $t[0] ) . '</span><span class="vg-stat-value">' . (int) $t[1] . '</span></a>';
+			}
+			echo '</nav>';
+		}
+
+		echo '<section class="vg-card">';
+		echo '<div class="vg-card-head">';
+		if ( $set ) {
+			/* translators: %s: rule set title. */
+			echo '<h2>' . esc_html( sprintf( __( 'Where “%s” is used', 'visigate' ), $set->post_title ? $set->post_title : '#' . $set->ID ) ) . '</h2>';
+		} else {
+			$n = Visigate_Admin_UI::usage_totals()['places'];
+			/* translators: %d: number of places. */
+			echo '<h2>' . esc_html( sprintf( _n( '%d place uses a rule set', '%d places use rule sets', $n, 'visigate' ), $n ) ) . '</h2>';
+		}
+		echo '<div class="vg-actions">';
+		if ( ! $set ) {
+			echo '<nav class="vg-segment" aria-label="' . esc_attr__( 'Group by', 'visigate' ) . '">';
+			foreach ( array( 'set' => __( 'By rule set', 'visigate' ), 'page' => __( 'By page', 'visigate' ) ) as $g => $label ) {
+				$href = add_query_arg( array_filter( array( 'kind' => $kind, 'group' => 'page' === $g ? 'page' : '' ) ), self::usage_url() );
+				echo '<a class="vg-seg' . ( $g === $group ? ' is-active' : '' ) . '" href="' . esc_url( $href ) . '"' . ( $g === $group ? ' aria-current="page"' : '' ) . '>' . esc_html( $label ) . '</a>';
+			}
+			echo '</nav>';
+		}
+		if ( $set ) {
+			echo '<a class="vg-btn" href="' . esc_url( self::usage_url() ) . '">' . esc_html__( 'All rule sets', 'visigate' ) . '</a>';
+			echo '<a class="vg-btn" href="' . esc_url( (string) get_edit_post_link( $set->ID ) ) . '">' . esc_html__( 'Edit rule set', 'visigate' ) . '</a>';
+		}
+		?>
+		<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+			<?php wp_nonce_field( 'visigate_usage_refresh' ); ?>
+			<input type="hidden" name="action" value="visigate_usage_refresh">
+			<input type="hidden" name="set" value="<?php echo (int) ( $set ? $set->ID : 0 ); ?>">
+			<button type="submit" class="vg-btn"><?php esc_html_e( 'Refresh usage list', 'visigate' ); ?></button>
+		</form>
+		<?php
+		echo '</div></div>';
 
 		if ( $set ) {
 			self::render_set_table( $set );
 		} else {
-			self::render_overview();
+			self::render_overview( $kind, $group );
 		}
-		?>
-		<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" style="margin-top:16px">
-			<?php wp_nonce_field( 'visigate_usage_refresh' ); ?>
-			<input type="hidden" name="action" value="visigate_usage_refresh">
-			<input type="hidden" name="set" value="<?php echo (int) ( $set ? $set->ID : 0 ); ?>">
-			<button type="submit" class="button"><?php esc_html_e( 'Refresh usage list', 'visigate' ); ?></button>
-		</form>
-		<p class="description" style="margin-top:12px"><?php esc_html_e( 'Checks blocks, patterns, templates, template parts, navigation menus, shortcodes, widgets, Elementor elements and menu items. Revisions and trashed content are skipped. Rule sets used from PHP, such as visigate_visible( 12 ) in a theme file, cannot be detected.', 'visigate' ); ?></p>
-		</div>
-		<?php
+		echo '<div class="vg-card-foot"><span>' . esc_html__( 'Checks blocks, patterns, templates, template parts, navigation menus, shortcodes, widgets, Elementor elements and menu items. Revisions and trashed content are skipped. Rule sets used from PHP, such as visigate_visible( 12 ) in a theme file, cannot be detected.', 'visigate' ) . '</span></div>';
+		echo '</section>';
+		Visigate_Admin_UI::footer();
+		echo '</div>';
+	}
+
+	/** One rule set's header row (mark, title, summary, count). */
+	private static function render_group_head( $set, $count, $link = true ) {
+		$sum   = Visigate_Admin_UI::summarize( get_post_meta( $set->ID, Visigate_Ruleset::META, true ) );
+		$stat  = Visigate_Admin_UI::status( $set, $sum, $count );
+		$title = $set->post_title ? $set->post_title : '#' . $set->ID;
+		echo '<div class="vg-group-head' . ( 'hidden' === $sum['state'] ? ' is-hidden' : '' ) . '">';
+		echo '<span class="' . esc_attr( Visigate_Admin_UI::mark_class( $sum['state'], $stat[0] ) ) . '" aria-hidden="true"></span>';
+		if ( $link ) {
+			echo '<a class="vg-row-title" href="' . esc_url( self::usage_url( $set->ID ) ) . '">' . esc_html( $title ) . '</a>';
+		} else {
+			echo '<strong class="vg-row-title">' . esc_html( $title ) . '</strong>';
+		}
+		echo '<span class="vg-row-text">' . esc_html( $sum['text'] ) . '</span>';
+		if ( 'active' !== $stat[0] && 'unused' !== $stat[0] ) {
+			echo '<span class="vg-badge ' . esc_attr( $stat[2] ) . '" style="margin-left:0">' . esc_html( $stat[1] ) . '</span>';
+		}
+		/* translators: %d: number of places. */
+		echo '<span class="vg-badge is-info">' . esc_html( sprintf( _n( '%d place', '%d places', $count, 'visigate' ), $count ) ) . '</span>';
+		echo '</div>';
+	}
+
+	/** Rows for a list of uses. */
+	private static function render_use_rows( $uses ) {
+		echo '<div class="vg-rows">';
+		foreach ( $uses as $use ) {
+			$d = self::describe( $use );
+			if ( ! $d ) {
+				continue;
+			}
+			echo '<div class="vg-row is-sub vg-grid-uses">';
+			echo '<span class="vg-kind">' . esc_html( $d['type'] ) . '</span>';
+			echo '<span>' . ( $d['edit'] ? '<a class="vg-row-title" href="' . esc_url( $d['edit'] ) . '">' . esc_html( $d['title'] ) . '</a>' : '<strong>' . esc_html( $d['title'] ) . '</strong>' ) . '</span>';
+			echo '<span class="vg-row-text">' . esc_html( $d['how'] ) . '</span>';
+			echo '<span class="vg-row-text">' . esc_html( $d['status'] ) . '</span>';
+			echo '<span>' . ( $d['view'] ? '<a href="' . esc_url( $d['view'] ) . '">' . esc_html__( 'View', 'visigate' ) . '</a>' : '' ) . '</span>';
+			echo '</div>';
+		}
+		echo '</div>';
 	}
 
 	private static function render_set_table( $set ) {
 		$uses = self::for_set( $set->ID );
 		if ( 'publish' !== $set->post_status && $uses ) {
-			echo '<div class="notice notice-warning inline"><p>' . esc_html__( 'This rule set is not published, so content that uses it is hidden from everyone. Publish it, or choose another rule set in this content.', 'visigate' ) . '</p></div>';
+			echo '<div class="vg-card-body"><div class="notice notice-warning inline"><p>' . esc_html__( 'This rule set is not published, so content that uses it is hidden from everyone. Publish it, or choose another rule set in this content.', 'visigate' ) . '</p></div></div>';
 		}
+		self::render_group_head( $set, count( $uses ), false );
 		if ( ! $uses ) {
-			echo '<p>' . esc_html__( 'This rule set is not used anywhere yet. Editing or deleting it will not change any content.', 'visigate' ) . '</p>';
+			echo '<div class="vg-empty"><p>' . esc_html__( 'This rule set is not used anywhere yet. Editing or deleting it will not change any content.', 'visigate' ) . '</p></div>';
 			return;
 		}
-		echo '<p>' . esc_html(
+		echo '<div class="vg-card-body"><p class="vg-muted">' . esc_html(
 			sprintf(
 				/* translators: %d: number of places. */
 				_n( 'Used in %d place. Changes to this rule set apply to all of them.', 'Used in %d places. Changes to this rule set apply to all of them.', count( $uses ), 'visigate' ),
 				count( $uses )
 			)
-		) . '</p>';
-		?>
-		<table class="wp-list-table widefat fixed striped">
-			<thead><tr>
-				<th scope="col" style="width:38%"><?php esc_html_e( 'Title', 'visigate' ); ?></th>
-				<th scope="col"><?php esc_html_e( 'Type', 'visigate' ); ?></th>
-				<th scope="col"><?php esc_html_e( 'Used by', 'visigate' ); ?></th>
-				<th scope="col"><?php esc_html_e( 'Status', 'visigate' ); ?></th>
-			</tr></thead>
-			<tbody>
-			<?php
-			foreach ( $uses as $use ) :
-				$d = self::describe( $use );
-				if ( ! $d ) {
-					continue;
-				}
-				?>
-				<tr>
-					<td>
-						<strong><?php echo $d['edit'] ? '<a href="' . esc_url( $d['edit'] ) . '">' . esc_html( $d['title'] ) . '</a>' : esc_html( $d['title'] ); ?></strong>
-						<?php if ( $d['view'] ) : ?>
-							<div class="row-actions visible"><a href="<?php echo esc_url( $d['view'] ); ?>"><?php esc_html_e( 'View', 'visigate' ); ?></a></div>
-						<?php endif; ?>
-					</td>
-					<td><?php echo esc_html( $d['type'] ); ?></td>
-					<td><?php echo esc_html( $d['how'] ); ?></td>
-					<td><?php echo esc_html( $d['status'] ); ?></td>
-				</tr>
-			<?php endforeach; ?>
-			</tbody>
-		</table>
-		<?php
+		) . '</p></div>';
+		self::render_use_rows( $uses );
 	}
 
-	private static function render_overview() {
+	/** Uses that include the chosen kind (block, elementor, menu, shortcode), or all of them. */
+	private static function filter_kind( $uses, $kind ) {
+		if ( '' === $kind ) {
+			return $uses;
+		}
+		return array_values(
+			array_filter(
+				$uses,
+				function ( $u ) use ( $kind ) {
+					return ! empty( $u['how'][ $kind ] );
+				}
+			)
+		);
+	}
+
+	private static function render_overview( $kind = '', $group = 'set' ) {
 		$sets = get_posts(
 			array(
 				'post_type'   => Visigate_Ruleset::CPT,
@@ -414,27 +487,97 @@ class Visigate_Usage {
 			)
 		);
 		if ( ! $sets ) {
-			echo '<p>' . esc_html__( 'No rule sets yet.', 'visigate' ) . '</p>';
+			echo '<div class="vg-empty"><p>' . esc_html__( 'No rule sets yet.', 'visigate' ) . '</p><a class="vg-btn is-primary" href="' . esc_url( admin_url( 'post-new.php?post_type=' . Visigate_Ruleset::CPT ) ) . '">' . esc_html__( 'New rule set', 'visigate' ) . '</a></div>';
 			return;
 		}
-		?>
-		<table class="wp-list-table widefat fixed striped">
-			<thead><tr>
-				<th scope="col" style="width:40%"><?php esc_html_e( 'Rule set', 'visigate' ); ?></th>
-				<th scope="col"><?php esc_html_e( 'Used in', 'visigate' ); ?></th>
-				<th scope="col"><?php esc_html_e( 'Status', 'visigate' ); ?></th>
-			</tr></thead>
-			<tbody>
-			<?php foreach ( $sets as $s ) : ?>
-				<tr>
-					<td><strong><a href="<?php echo esc_url( self::usage_url( $s->ID ) ); ?>"><?php echo esc_html( $s->post_title ? $s->post_title : '#' . $s->ID ); ?></a></strong></td>
-					<td><?php self::render_count( $s->ID ); ?></td>
-					<td><?php echo esc_html( get_post_status_object( $s->post_status )->label ); ?></td>
-				</tr>
-			<?php endforeach; ?>
-			</tbody>
-		</table>
-		<?php
+		if ( 'page' === $group ) {
+			self::render_by_page( $sets, $kind );
+			return;
+		}
+		$unused = array();
+		$shown  = 0;
+		foreach ( $sets as $s ) {
+			$all  = self::for_set( $s->ID );
+			$uses = self::filter_kind( $all, $kind );
+			if ( ! $all ) {
+				$unused[] = $s;
+				continue;
+			}
+			if ( ! $uses ) {
+				continue;
+			}
+			++$shown;
+			self::render_group_head( $s, count( $uses ) );
+			self::render_use_rows( array_slice( $uses, 0, 10 ) );
+			if ( count( $uses ) > 10 ) {
+				/* translators: %d: number of places. */
+				echo '<div class="vg-card-foot"><a href="' . esc_url( self::usage_url( $s->ID ) ) . '">' . esc_html( sprintf( __( 'See all %d places', 'visigate' ), count( $uses ) ) ) . '</a></div>';
+			}
+		}
+		if ( ! $shown ) {
+			echo '<div class="vg-empty"><p>' . esc_html( '' !== $kind ? __( 'No rule set is used in this type of content.', 'visigate' ) : __( 'No rule set is used anywhere yet. Choose one in the block editor sidebar, in Elementor (Advanced → Visigate), on a menu item, or with a shortcode.', 'visigate' ) ) . '</p></div>';
+		}
+		if ( $unused && '' === $kind ) {
+			$links = array();
+			foreach ( $unused as $s ) {
+				$links[] = '<a href="' . esc_url( (string) get_edit_post_link( $s->ID ) ) . '">' . esc_html( $s->post_title ? $s->post_title : '#' . $s->ID ) . '</a>';
+			}
+			echo '<div class="vg-card-foot" style="border-top:1px solid #eef0f6"><strong>' . esc_html__( 'Not used anywhere:', 'visigate' ) . '</strong> <span>' . wp_kses( implode( ', ', $links ), array( 'a' => array( 'href' => array() ) ) ) . '</span></div>';
+		}
+	}
+
+	/** One group per page, menu or widget, listing the rule sets it uses. */
+	private static function render_by_page( $sets, $kind ) {
+		$by_id  = array();
+		foreach ( $sets as $s ) {
+			$by_id[ $s->ID ] = $s;
+		}
+		$places = array();
+		foreach ( self::index() as $set_id => $uses ) {
+			if ( ! isset( $by_id[ $set_id ] ) ) {
+				continue;
+			}
+			foreach ( self::filter_kind( (array) $uses, $kind ) as $use ) {
+				$key = $use['object'] . ':' . $use['id'];
+				if ( ! isset( $places[ $key ] ) ) {
+					$places[ $key ] = array( 'use' => $use, 'sets' => array() );
+				}
+				$places[ $key ]['sets'][ $set_id ] = $use['how'];
+			}
+		}
+		if ( ! $places ) {
+			echo '<div class="vg-empty"><p>' . esc_html__( 'Nothing found for this filter.', 'visigate' ) . '</p></div>';
+			return;
+		}
+		foreach ( $places as $place ) {
+			$d = self::describe( $place['use'] );
+			if ( ! $d ) {
+				continue;
+			}
+			echo '<div class="vg-group-head">';
+			echo '<span class="vg-kind">' . esc_html( $d['type'] ) . '</span>';
+			echo $d['edit'] ? '<a class="vg-row-title" href="' . esc_url( $d['edit'] ) . '">' . esc_html( $d['title'] ) . '</a>' : '<strong class="vg-row-title">' . esc_html( $d['title'] ) . '</strong>';
+			echo '<span class="vg-row-text">' . esc_html( $d['status'] ) . '</span>';
+			if ( $d['view'] ) {
+				echo '<a href="' . esc_url( $d['view'] ) . '">' . esc_html__( 'View', 'visigate' ) . '</a>';
+			}
+			/* translators: %d: number of rule sets. */
+			echo '<span class="vg-badge is-info">' . esc_html( sprintf( _n( '%d rule set', '%d rule sets', count( $place['sets'] ), 'visigate' ), count( $place['sets'] ) ) ) . '</span>';
+			echo '</div><div class="vg-rows">';
+			foreach ( $place['sets'] as $set_id => $how ) {
+				$set  = $by_id[ $set_id ];
+				$sum  = Visigate_Admin_UI::summarize( get_post_meta( $set_id, Visigate_Ruleset::META, true ) );
+				$stat = Visigate_Admin_UI::status( $set, $sum );
+				echo '<div class="vg-row is-sub vg-grid-bypage">';
+				echo '<div class="vg-row-name"><span class="' . esc_attr( Visigate_Admin_UI::mark_class( $sum['state'], $stat[0] ) ) . '" aria-hidden="true"></span><div>';
+				echo '<a class="vg-row-title" href="' . esc_url( (string) get_edit_post_link( $set_id ) ) . '">' . esc_html( $set->post_title ? $set->post_title : '#' . $set_id ) . '</a>';
+				echo '<span class="vg-row-text">' . esc_html( $sum['text'] ) . '</span></div></div>';
+				echo '<span class="vg-row-text">' . esc_html( self::how_text( $how ) ) . '</span>';
+				echo '<span><span class="vg-badge ' . esc_attr( $stat[2] ) . '">' . esc_html( $stat[1] ) . '</span></span>';
+				echo '</div>';
+			}
+			echo '</div>';
+		}
 	}
 
 	/** "N places" link, or a muted "Not used". Also used by the Rule Sets list column. */

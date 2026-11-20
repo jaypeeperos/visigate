@@ -279,6 +279,11 @@ class Visigate_View_As {
 			exit;
 		}
 		self::write( $raw );
+		// "Inspect here": stay on the View As screen, which reads the page's rule checks in the background.
+		if ( isset( $_POST['vg_inspect'] ) ) {
+			wp_safe_redirect( add_query_arg( 'inspect', 1, self::page_url( $return ) ) );
+			exit;
+		}
 		wp_safe_redirect( $return );
 		exit;
 	}
@@ -425,70 +430,151 @@ class Visigate_View_As {
 		);
 	}
 
+	/** Pages offered in the Page list: home page, then published pages. */
+	private static function page_choices( $current ) {
+		$choices = array( home_url( '/' ) => __( 'Home page', 'visigate' ) );
+		$pages   = get_pages( array( 'sort_column' => 'menu_order,post_title', 'number' => 150 ) );
+		foreach ( (array) $pages as $p ) {
+			$url = (string) get_permalink( $p );
+			if ( $url && ! isset( $choices[ $url ] ) ) {
+				$choices[ $url ] = '' !== $p->post_title ? $p->post_title : __( '(no title)', 'visigate' );
+			}
+		}
+		if ( function_exists( 'wc_get_page_id' ) ) {
+			foreach ( array( 'shop', 'cart', 'myaccount' ) as $wc ) {
+				$id = (int) wc_get_page_id( $wc );
+				if ( $id > 0 && get_permalink( $id ) ) {
+					$choices[ (string) get_permalink( $id ) ] = get_the_title( $id );
+				}
+			}
+		}
+		if ( $current && ! isset( $choices[ $current ] ) ) {
+			$choices = array( $current => $current ) + $choices;
+		}
+		return $choices;
+	}
+
 	public static function render_page() {
 		$s = self::saved_state();
 		// phpcs:disable WordPress.Security.NonceVerification.Recommended
-		$return = isset( $_GET['return'] ) ? esc_url_raw( wp_unslash( (string) $_GET['return'] ) ) : '';
-		$return = wp_validate_redirect( $return, home_url( '/' ) );
-		$active = '' !== $s['user'] || '' !== $s['device'] || '' !== $s['time'] || ! empty( $s['extra'] );
+		$return  = isset( $_GET['return'] ) ? esc_url_raw( wp_unslash( (string) $_GET['return'] ) ) : '';
+		$return  = wp_validate_redirect( $return, home_url( '/' ) );
+		$stopped = isset( $_GET['stopped'] );
+		$inspect = isset( $_GET['inspect'] );
+		// phpcs:enable
+		$active   = '' !== $s['user'] || '' !== $s['device'] || '' !== $s['time'] || ! empty( $s['extra'] );
+		$labels   = self::labels( $s );
+		$choices  = self::page_choices( $return );
+		$page_txt = $choices[ $return ] ?? $return;
+		$inspect  = $inspect || $active;
+		$who      = $active ? $labels : array( __( 'You (nothing simulated)', 'visigate' ) );
 		?>
-		<div class="wrap">
-			<h1><?php esc_html_e( 'View As', 'visigate' ); ?></h1>
-			<?php if ( isset( $_GET['stopped'] ) ) : ?>
+		<div class="wrap vg-wrap vg-page">
+			<h1 class="vg-sr"><?php esc_html_e( 'View As', 'visigate' ); ?></h1>
+			<hr class="wp-header-end">
+			<?php if ( $stopped ) : ?>
 				<div class="notice notice-success is-dismissible"><p><?php esc_html_e( 'Stopped. You now see the site as yourself again.', 'visigate' ); ?></p></div>
 			<?php endif; ?>
-			<?php // phpcs:enable ?>
-			<p style="max-width:720px"><?php esc_html_e( 'Preview the front end as someone else to test your visibility rules. You stay logged in: only the rule checks change, and only for you. Your choice lasts until you close the browser or stop it here or in the admin bar.', 'visigate' ); ?></p>
-			<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
-				<?php wp_nonce_field( self::NONCE ); ?>
-				<input type="hidden" name="action" value="visigate_view_as">
-				<table class="form-table" role="presentation">
-					<tr>
-						<th scope="row"><label for="vg-va-user"><?php esc_html_e( 'Visitor', 'visigate' ); ?></label></th>
-						<td>
-							<select id="vg-va-user" name="view_as[user]">
-								<option value=""><?php esc_html_e( 'Me (my real account)', 'visigate' ); ?></option>
-								<option value="guest" <?php selected( $s['user'], 'guest' ); ?>><?php esc_html_e( 'Logged-out visitor', 'visigate' ); ?></option>
-								<optgroup label="<?php esc_attr_e( 'Logged in with role', 'visigate' ); ?>">
-									<?php foreach ( wp_roles()->get_names() as $slug => $name ) : ?>
-										<option value="<?php echo esc_attr( 'role:' . $slug ); ?>" <?php selected( $s['user'], 'role:' . $slug ); ?>><?php echo esc_html( translate_user_role( $name ) ); ?></option>
-									<?php endforeach; ?>
-								</optgroup>
-							</select>
-							<p class="description"><?php esc_html_e( 'A role preview matches role and capability rules for that role. Specific-user rules do not match, and account age uses your own account.', 'visigate' ); ?></p>
-						</td>
-					</tr>
-					<tr>
-						<th scope="row"><label for="vg-va-device"><?php esc_html_e( 'Device', 'visigate' ); ?></label></th>
-						<td>
-							<select id="vg-va-device" name="view_as[device]">
-								<option value=""><?php esc_html_e( 'My real device', 'visigate' ); ?></option>
-								<option value="desktop" <?php selected( $s['device'], 'desktop' ); ?>><?php esc_html_e( 'Desktop', 'visigate' ); ?></option>
-								<option value="tablet" <?php selected( $s['device'], 'tablet' ); ?>><?php esc_html_e( 'Tablet', 'visigate' ); ?></option>
-								<option value="mobile" <?php selected( $s['device'], 'mobile' ); ?>><?php esc_html_e( 'Mobile', 'visigate' ); ?></option>
-							</select>
-							<p class="description"><?php esc_html_e( 'Changes which device rules match. The page layout itself does not change size.', 'visigate' ); ?></p>
-						</td>
-					</tr>
-					<?php do_action( 'visigate_view_as_fields', $s ); ?>
-				</table>
-				<?php if ( ! has_action( 'visigate_view_as_fields' ) ) : ?>
-					<p class="description" style="max-width:720px">
-						<?php esc_html_e( 'Visigate Pro can also simulate country, cookies, referrer and WooCommerce states, and its Business plan can preview a chosen date and time.', 'visigate' ); ?>
-						<a href="<?php echo esc_url( (string) apply_filters( 'visigate_upgrade_url', 'https://persjay.com/plugins/visigate/#pricing' ) ); ?>" target="_blank" rel="noopener"><?php esc_html_e( 'Learn more', 'visigate' ); ?></a>
-					</p>
-				<?php endif; ?>
-				<p>
-					<label for="vg-va-return"><strong><?php esc_html_e( 'Open this page', 'visigate' ); ?></strong></label><br>
-					<input id="vg-va-return" type="url" class="regular-text" name="return" value="<?php echo esc_attr( $return ); ?>">
-				</p>
-				<p class="submit">
-					<button type="submit" class="button button-primary"><?php esc_html_e( 'Start viewing', 'visigate' ); ?></button>
-					<?php if ( $active ) : ?>
-						<button type="submit" name="stop" value="1" class="button"><?php echo esc_html( self::stop_label( self::labels( $s ) ) ); ?></button>
+
+			<div class="vg-cols vg-va-cols">
+				<form class="vg-card vg-va-form" method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" aria-labelledby="vg-va-title">
+					<?php wp_nonce_field( self::NONCE ); ?>
+					<input type="hidden" name="action" value="visigate_view_as">
+					<h2 id="vg-va-title"><?php esc_html_e( 'Preview a page as someone else', 'visigate' ); ?></h2>
+
+					<fieldset class="vg-va-field">
+						<legend><?php esc_html_e( 'Visitor', 'visigate' ); ?></legend>
+						<div class="vg-pills">
+							<?php
+							$visitors = array(
+								'guest' => __( 'Logged-out visitor', 'visigate' ),
+								''      => __( 'Me (my real account)', 'visigate' ),
+							);
+							foreach ( wp_roles()->get_names() as $slug => $role_name ) {
+								$visitors[ 'role:' . $slug ] = translate_user_role( $role_name );
+							}
+							foreach ( $visitors as $value => $label ) :
+								?>
+								<label class="vg-pill-option">
+									<input type="radio" name="view_as[user]" value="<?php echo esc_attr( $value ); ?>" <?php checked( $s['user'], $value ); ?>>
+									<span><?php echo esc_html( $label ); ?></span>
+								</label>
+							<?php endforeach; ?>
+						</div>
+						<p class="vg-va-note"><?php esc_html_e( 'A role preview matches role and capability rules for that role. Specific-user rules do not match, and account age uses your own account.', 'visigate' ); ?></p>
+					</fieldset>
+
+					<fieldset class="vg-va-field">
+						<legend><?php esc_html_e( 'Device', 'visigate' ); ?></legend>
+						<div class="vg-segment">
+							<?php
+							$devices = array(
+								''        => __( 'My real device', 'visigate' ),
+								'desktop' => __( 'Desktop', 'visigate' ),
+								'tablet'  => __( 'Tablet', 'visigate' ),
+								'mobile'  => __( 'Mobile', 'visigate' ),
+							);
+							foreach ( $devices as $value => $label ) :
+								?>
+								<label class="vg-seg-option">
+									<input type="radio" name="view_as[device]" value="<?php echo esc_attr( $value ); ?>" <?php checked( $s['device'], $value ); ?>>
+									<span><?php echo esc_html( $label ); ?></span>
+								</label>
+							<?php endforeach; ?>
+						</div>
+					</fieldset>
+
+					<?php if ( has_action( 'visigate_view_as_fields' ) ) : ?>
+						<div class="vg-va-pro">
+							<table class="form-table" role="presentation">
+								<?php do_action( 'visigate_view_as_fields', $s ); ?>
+							</table>
+						</div>
+					<?php else : ?>
+						<div class="vg-va-pro is-upsell">
+							<h3><?php esc_html_e( 'Simulate Pro conditions', 'visigate' ); ?> <span class="vg-pill"><?php esc_html_e( 'Pro', 'visigate' ); ?></span></h3>
+							<p><?php esc_html_e( 'Visigate Pro can also simulate country, cookies, referrer and WooCommerce states, and its Business plan can preview a chosen date and time.', 'visigate' ); ?></p>
+							<a href="<?php echo esc_url( (string) apply_filters( 'visigate_upgrade_url', 'https://persjay.com/plugins/visigate/#pricing' ) ); ?>" target="_blank" rel="noopener"><?php esc_html_e( 'Learn more', 'visigate' ); ?></a>
+						</div>
 					<?php endif; ?>
-				</p>
-			</form>
+
+					<div class="vg-va-field">
+						<label class="vg-va-label" for="vg-va-return"><?php esc_html_e( 'Page', 'visigate' ); ?></label>
+						<select id="vg-va-return" name="return">
+							<?php foreach ( $choices as $url => $title ) : ?>
+								<option value="<?php echo esc_url( $url ); ?>" <?php selected( $url, $return ); ?>><?php echo esc_html( $title ); ?></option>
+							<?php endforeach; ?>
+						</select>
+					</div>
+
+					<div class="vg-va-submit">
+						<button type="submit" formtarget="_blank" class="vg-btn is-primary is-lg vg-va-open" data-vg-reload="<?php echo esc_url( self::page_url() ); ?>"><?php esc_html_e( 'Open this page as this visitor', 'visigate' ); ?> <span class="vg-sr"><?php esc_html_e( '(opens in a new tab)', 'visigate' ); ?></span><span aria-hidden="true">↗</span></button>
+						<button type="submit" name="vg_inspect" value="1" class="vg-btn is-lg"><?php esc_html_e( 'Inspect here', 'visigate' ); ?></button>
+						<?php if ( $active ) : ?>
+							<button type="submit" name="stop" value="1" class="vg-btn"><?php echo esc_html( self::stop_label( $labels ) ); ?></button>
+						<?php endif; ?>
+					</div>
+					<p class="vg-va-note"><?php esc_html_e( 'The page opens in a new tab and this screen stays open. You stay logged in, and a bar at the top of the page shows who you are viewing as, with Stop previewing.', 'visigate' ); ?></p>
+				</form>
+
+				<section class="vg-inspector" aria-labelledby="vg-insp-title" data-url="<?php echo esc_url( $inspect ? add_query_arg( 'visigate_inspect_data', '1', $return ) : '' ); ?>">
+					<div class="vg-inspector-head">
+						<h2 id="vg-insp-title"><span class="vg-inspector-kicker"><?php esc_html_e( 'Rule inspector', 'visigate' ); ?></span> <span class="vg-inspector-what"><?php echo esc_html( $inspect ? implode( ' · ', array_merge( array( $page_txt ), $who ) ) : $page_txt ); ?></span></h2>
+						<span class="vg-inspector-counts" aria-live="polite"></span>
+					</div>
+					<div class="vg-inspector-body">
+						<?php if ( $inspect ) : ?>
+							<p class="vg-inspector-empty"><?php esc_html_e( 'Checking the page…', 'visigate' ); ?></p>
+						<?php else : ?>
+							<div class="vg-inspector-empty">
+								<p><strong><?php esc_html_e( 'See why each piece of content is shown or hidden.', 'visigate' ); ?></strong></p>
+								<p><?php esc_html_e( 'Choose a visitor and a page, then press Inspect here. Every block, Elementor element and menu item with a rule is listed with the conditions that passed or failed.', 'visigate' ); ?></p>
+							</div>
+						<?php endif; ?>
+					</div>
+				</section>
+			</div>
+			<?php Visigate_Admin_UI::footer(); ?>
 		</div>
 		<?php
 	}

@@ -4,7 +4,7 @@ Tags: conditional content, visibility, elementor, block editor, personalization
 Requires at least: 6.2
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.5.6
+Stable tag: 1.6.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -175,19 +175,33 @@ Yes. Visigate Pro is a separate plugin sold outside WordPress.org. This plugin d
 
 == Screenshots ==
 
-1. The visual rule builder: AND/OR condition groups with a plain-English summary and a ready-to-use shortcode.
-2. The Visibility Rules panel in the block editor, combining a saved rule set with custom rules for one block.
-3. The Pattern Visibility sidebar sets rules on a synced or unsynced pattern placement without editing the pattern.
-4. The "Open Visigate" shortcut in Page settings opens the Pattern Visibility sidebar.
-5. Custom rules with AND/OR groups on a classic Elementor element, styled to match Elementor's dark theme.
-6. Visibility rules on an Elementor atomic Flexbox, alongside a saved rule set.
-7. The Rule Sets list, showing each rule's summary, where it is used and its shortcode, with Where used and Duplicate actions.
-8. Cache safety, admin preview, View as and developer reference on the settings screen.
-9. The Usage screen lists every pattern, page, navigation menu and menu item that uses a rule set.
-10. View as in the admin bar: preview a page as a logged-out visitor, with hidden content revealed and outlined.
-11. A menu item with a Visigate rule set, so "Log in" shows only to logged-out visitors.
+1. The Overview screen: rule sets shown by rules or always hidden, every place that uses a rule set, cache safety and one-click previews.
+2. The rule set editor: a plain-English summary, numbered condition groups joined by AND / OR, and an Always hide switch.
+3. The Rule sets screen with status filters, condition chips, usage counts, an Always hide switch on each row, bulk actions and a Trash.
+4. The Visibility Rules panel in the block editor, combining a saved rule set with custom rules for one block.
+5. The Pattern Visibility sidebar sets rules on a synced or unsynced pattern placement without editing the pattern.
+6. The "Open Visigate" shortcut in Page settings opens the Pattern Visibility sidebar.
+7. Custom rules with AND/OR groups on a classic Elementor element, styled to match Elementor's dark theme.
+8. Visibility rules on an Elementor atomic Flexbox, alongside a saved rule set.
+9. A menu item with a Visigate rule set, so "Log in" shows only to logged-out visitors.
+10. Where used: every block, Elementor element, menu item and shortcode that uses a rule set, filterable by type and grouped by rule set or by page.
+11. View as with the rule inspector: preview a page as another visitor and see which conditions passed or failed for each piece of content.
+12. View as in the admin bar: preview a page as a logged-out visitor, with hidden content revealed and outlined.
+13. Cache check: which caches are active, which pages they could get wrong, and how to fix it.
+14. Settings: cache safety, admin preview, View as and who can manage rules.
 
 == Changelog ==
+
+= 1.6.0 =
+* New: redesigned admin. Every Visigate screen shares one header with tabs: Overview, Rule sets, Where used, Cache check, View as and Settings.
+* New: Overview screen with rule set totals, places using rules, cache safety and one-click previews.
+* New: Rule sets screen with status filters, plain-language summaries, condition chips, an Always hide switch on each row, bulk actions and its own Trash (restore, delete permanently, empty).
+* New: Where used can be filtered by blocks, Elementor elements, menu items or shortcodes, and grouped by rule set or by page.
+* New: View as shows a rule inspector beside the form: it loads the chosen page as that visitor and lists every rule check with the conditions that passed or failed. "Inspect here" also works without simulating anyone.
+* New: "Who can manage rules" setting (administrators only, or administrators and editors). Settings stay administrator-only.
+* Improved: Cache check opens with a status summary and step-by-step fixes when a cache could serve the wrong version.
+* Improved: the rule set editor shows the rule summary first, numbered condition groups and clearer AND / OR markers.
+* Improved: admin notices and Screen Options sit above the Visigate header.
 
 = 1.5.6 =
 * Fix: Elementor inspection and admin preview bypass cached document HTML so inspector entries locate the correct elements, including when the cache setting has never been saved.
@@ -294,6 +308,9 @@ Pro conditions moved to the separate Visigate Pro add-on; unknown conditions now
 Initial release.
 
 == Upgrade Notice ==
+
+= 1.6.0 =
+Redesigned admin screens: new Overview, Rule sets list with Trash, rule inspector in View as, and a setting for who can manage rules.
 
 = 1.5.4 =
 Adds post author and age rules. Update Free first, then Pro 1.5.4 for the new ACF, language, operating system and cart conditions.

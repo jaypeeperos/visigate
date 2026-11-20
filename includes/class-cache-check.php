@@ -18,6 +18,11 @@ class Visigate_Cache_Check {
 	public static function init() {
 		add_action( 'admin_menu', array( __CLASS__, 'menu' ), 11 );
 		add_action( 'admin_post_visigate_cache_test', array( __CLASS__, 'handle_test' ) );
+		add_action( 'save_post_' . Visigate_Ruleset::CPT, array( __CLASS__, 'flush_issues' ) );
+		add_action( 'update_option_' . Visigate_Admin::OPTION, array( __CLASS__, 'flush_issues' ) );
+		add_action( 'add_option_' . Visigate_Admin::OPTION, array( __CLASS__, 'flush_issues' ) );
+		add_action( 'activated_plugin', array( __CLASS__, 'flush_issues' ) );
+		add_action( 'deactivated_plugin', array( __CLASS__, 'flush_issues' ) );
 	}
 
 	public static function page_url() {
@@ -312,12 +317,56 @@ class Visigate_Cache_Check {
 		return null;
 	}
 
+	/* -------------------------------- issues -------------------------------- */
+
+	/**
+	 * Problems worth a warning: visitor-specific rules exist AND something could still cache them
+	 * (automatic exclusion off, or a cache that only reads headers). Cached for 10 minutes.
+	 *
+	 * @return string[]
+	 */
+	public static function issues( $fresh = false ) {
+		$cached = $fresh ? false : get_transient( 'visigate_cache_issues' );
+		if ( is_array( $cached ) ) {
+			return $cached;
+		}
+		$out  = array();
+		$risk = self::affected_sets() || self::affected_content( 1 );
+		if ( $risk ) {
+			if ( ! Visigate_Admin::opt( 'auto_nocache' ) ) {
+				$out[] = __( 'Automatic cache exclusion is off, so page caches may store pages whose rules change from visitor to visitor.', 'visigate' );
+			}
+			foreach ( self::detect() as $c ) {
+				if ( 'yes' !== $c['honors'] ) {
+					/* translators: %s: cache name, such as Cloudflare. */
+					$out[] = sprintf( __( '%s only reads response headers, so it can still store pages that use visitor-specific rules.', 'visigate' ), $c['name'] );
+				}
+			}
+		}
+		set_transient( 'visigate_cache_issues', $out, 10 * MINUTE_IN_SECONDS );
+		return $out;
+	}
+
+	public static function issue_count() {
+		return count( self::issues() );
+	}
+
+	public static function issue_summary() {
+		$issues = self::issues();
+		return $issues ? $issues[0] : '';
+	}
+
+	public static function flush_issues() {
+		delete_transient( 'visigate_cache_issues' );
+	}
+
 	/* --------------------------------- page --------------------------------- */
 
 	public static function render_page() {
 		if ( ! current_user_can( visigate_capability() ) ) {
 			return;
 		}
+		$issues   = self::issues( true );
 		$caches   = self::detect();
 		$auto     = (bool) Visigate_Admin::opt( 'auto_nocache' );
 		$sets     = self::affected_sets();
@@ -326,126 +375,195 @@ class Visigate_Cache_Check {
 		$wp_cache = defined( 'WP_CACHE' ) && WP_CACHE;
 		$dropin   = file_exists( WP_CONTENT_DIR . '/advanced-cache.php' );
 		$block    = function_exists( 'wp_is_block_theme' ) && wp_is_block_theme();
+		$settings = admin_url( 'edit.php?post_type=' . Visigate_Ruleset::CPT . '&page=visigate-settings' );
 		$honors   = array(
-			'yes'     => __( 'Yes', 'visigate' ),
-			'headers' => __( 'Only through headers', 'visigate' ),
-			'unknown' => __( 'Unknown', 'visigate' ),
+			'yes'     => array( __( 'Honors the signal', 'visigate' ), 'is-ok', 'is-ok' ),
+			'headers' => array( __( 'Headers only', 'visigate' ), 'is-warn', 'is-warn' ),
+			'unknown' => array( __( 'Unknown', 'visigate' ), '', 'is-off' ),
 		);
 		?>
-		<div class="wrap">
-			<h1><?php esc_html_e( 'Cache Check', 'visigate' ); ?></h1>
-			<p style="max-width:780px"><?php esc_html_e( 'Visibility rules run on the server for each visit. A page cache stores one copy of a page and serves it to many visitors, so rules that depend on the visitor (device, time, cookies, URL parameters, cart and similar) can show the wrong content from a cached copy. Login and role rules are usually safe because page caches skip logged-in visitors.', 'visigate' ); ?></p>
+		<div class="wrap vg-wrap vg-page">
+			<h1 class="vg-sr"><?php esc_html_e( 'Cache Check', 'visigate' ); ?></h1>
+			<hr class="wp-header-end">
 
-			<h2><?php esc_html_e( 'Status', 'visigate' ); ?></h2>
-			<table class="widefat striped" style="max-width:900px">
-				<tbody>
-					<tr>
-						<td style="width:280px"><strong><?php esc_html_e( 'Automatic cache exclusion', 'visigate' ); ?></strong></td>
-						<td>
-							<?php if ( $auto ) : ?>
-								<span style="color:#00701a">✓ <?php esc_html_e( 'On. Pages that run visitor-specific rules tell caches not to store them.', 'visigate' ); ?></span>
-							<?php else : ?>
-								<span style="color:#b32d2e">✗ <?php esc_html_e( 'Off. Turn it on in Settings unless you manage cache exclusions yourself.', 'visigate' ); ?></span>
-							<?php endif; ?>
-							<a href="<?php echo esc_url( admin_url( 'edit.php?post_type=' . Visigate_Ruleset::CPT . '&page=visigate-settings' ) ); ?>"><?php esc_html_e( 'Settings', 'visigate' ); ?></a>
-						</td>
-					</tr>
-					<tr>
-						<td><strong><?php esc_html_e( 'Page caching in WordPress', 'visigate' ); ?></strong></td>
-						<td>
-							<?php
-							if ( $wp_cache || $dropin ) {
-								esc_html_e( 'A page cache is enabled (WP_CACHE / advanced-cache.php).', 'visigate' );
-							} else {
-								esc_html_e( 'No WordPress page-cache drop-in found. Your host or a CDN may still cache pages; run the header test below to check.', 'visigate' );
-							}
-							?>
-						</td>
-					</tr>
-					<tr>
-						<td><strong><?php esc_html_e( 'Theme type', 'visigate' ); ?></strong></td>
-						<td>
+			<?php if ( $issues ) : ?>
+				<section class="vg-banner is-warn">
+					<span class="vg-banner-icon" aria-hidden="true">!</span>
+					<div class="vg-banner-main">
+						<h2><?php /* translators: %d: number of problems */ echo esc_html( sprintf( _n( '%d thing can make a cache show the wrong version of a page', '%d things can make a cache show the wrong version of a page', count( $issues ), 'visigate' ), count( $issues ) ) ); ?></h2>
+						<?php foreach ( $issues as $issue ) : ?>
+							<p><?php echo esc_html( $issue ); ?></p>
+						<?php endforeach; ?>
+					</div>
+					<a class="vg-btn is-dark" href="#vg-cache-test"><?php esc_html_e( 'Run the header test', 'visigate' ); ?></a>
+				</section>
+			<?php else : ?>
+				<section class="vg-banner is-ok">
+					<span class="vg-banner-icon" aria-hidden="true">✓</span>
+					<div class="vg-banner-main">
+						<h2><?php esc_html_e( 'No cache problems found', 'visigate' ); ?></h2>
+						<p>
 							<?php
 							echo esc_html(
-								$block
-									? __( 'Block theme: rules run before any output, so Visigate can also send no-cache headers that server and CDN caches understand.', 'visigate' )
-									: __( 'Classic theme: rules usually run after headers are sent, so server and CDN caches (Varnish, Nginx, Cloudflare) do not receive a no-cache header. Plugin caches still honor the signal.', 'visigate' )
+								( $sets || $content )
+									? __( 'Pages with visitor-specific rules tell your caches not to store them, and every cache found here listens.', 'visigate' )
+									: __( 'No published rule set or page uses visitor-specific conditions, so a cached page shows the same content anyone would see.', 'visigate' )
 							);
 							?>
-						</td>
-					</tr>
-				</tbody>
-			</table>
-
-			<h2><?php esc_html_e( 'Detected caches', 'visigate' ); ?></h2>
-			<?php if ( ! $caches ) : ?>
-				<p><?php esc_html_e( 'No known cache plugin or managed host was detected.', 'visigate' ); ?></p>
-			<?php else : ?>
-				<table class="widefat striped" style="max-width:900px">
-					<thead><tr>
-						<th style="width:280px"><?php esc_html_e( 'Cache', 'visigate' ); ?></th>
-						<th style="width:180px"><?php esc_html_e( 'Honors Visigate’s signal', 'visigate' ); ?></th>
-						<th><?php esc_html_e( 'Notes', 'visigate' ); ?></th>
-					</tr></thead>
-					<tbody>
-					<?php foreach ( $caches as $c ) : ?>
-						<tr>
-							<td><?php echo esc_html( $c['name'] ); ?></td>
-							<td><?php echo esc_html( $honors[ $c['honors'] ] ?? $c['honors'] ); ?></td>
-							<td><?php echo esc_html( $c['note'] ); ?></td>
-						</tr>
-					<?php endforeach; ?>
-					</tbody>
-				</table>
+						</p>
+					</div>
+					<a class="vg-btn" href="#vg-cache-test"><?php esc_html_e( 'Run the header test', 'visigate' ); ?></a>
+				</section>
 			<?php endif; ?>
 
-			<h2><?php esc_html_e( 'Rules a cached page can get wrong', 'visigate' ); ?></h2>
-			<?php if ( ! $sets && ! $content ) : ?>
-				<p><?php esc_html_e( 'None found. No published rule set or page uses visitor-specific conditions.', 'visigate' ); ?></p>
-			<?php else : ?>
-				<p style="max-width:780px"><?php esc_html_e( 'These use conditions that differ between visitors of the same URL. With automatic exclusion on, the pages that run them are not cached by plugins that honor the signal. Check them with the header test if your host or CDN caches pages.', 'visigate' ); ?></p>
-				<table class="widefat striped" style="max-width:900px">
-					<thead><tr>
-						<th style="width:40%"><?php esc_html_e( 'Rule set or page', 'visigate' ); ?></th>
-						<th><?php esc_html_e( 'Visitor-specific conditions', 'visigate' ); ?></th>
-						<th style="width:120px"></th>
-					</tr></thead>
-					<tbody>
-					<?php foreach ( $sets as $row ) : ?>
-						<tr>
-							<td><a href="<?php echo esc_url( (string) get_edit_post_link( $row['post']->ID ) ); ?>"><?php echo esc_html( $row['post']->post_title ? $row['post']->post_title : '#' . $row['post']->ID ); ?></a> <span style="color:#646970">(<?php esc_html_e( 'rule set', 'visigate' ); ?>)</span></td>
-							<td><?php echo esc_html( implode( ', ', $row['types'] ) ); ?></td>
-							<td><a href="<?php echo esc_url( Visigate_Usage::usage_url( $row['post']->ID ) ); ?>"><?php esc_html_e( 'Where used', 'visigate' ); ?></a></td>
-						</tr>
-					<?php endforeach; ?>
-					<?php foreach ( $content as $row ) : ?>
-						<tr>
-							<td><a href="<?php echo esc_url( (string) get_edit_post_link( $row['post']->ID ) ); ?>"><?php echo esc_html( $row['post']->post_title ? $row['post']->post_title : __( '(no title)', 'visigate' ) ); ?></a></td>
-							<td><?php echo esc_html( implode( ', ', $row['types'] ) ); ?></td>
-							<td>
-								<?php if ( is_post_type_viewable( $row['post']->post_type ) ) : ?>
-									<a href="<?php echo esc_url( (string) get_permalink( $row['post'] ) ); ?>"><?php esc_html_e( 'View', 'visigate' ); ?></a>
+			<div class="vg-cols">
+				<div class="vg-col-main">
+					<section class="vg-card" aria-labelledby="vg-cc-found">
+						<div class="vg-card-head"><h2 id="vg-cc-found"><?php esc_html_e( 'Caching on this site', 'visigate' ); ?></h2></div>
+						<div class="vg-item">
+							<span class="vg-dot <?php echo $auto ? 'is-ok' : 'is-bad'; ?>" aria-hidden="true"></span>
+							<div class="vg-item-main">
+								<strong><?php esc_html_e( 'Automatic cache exclusion', 'visigate' ); ?></strong>
+								<span><?php echo esc_html( $auto ? __( 'On. Pages that run visitor-specific rules tell caches not to store them.', 'visigate' ) : __( 'Off. Turn it on in Settings unless you manage cache exclusions yourself.', 'visigate' ) ); ?></span>
+							</div>
+							<a href="<?php echo esc_url( $settings ); ?>"><?php esc_html_e( 'Settings', 'visigate' ); ?></a>
+						</div>
+						<div class="vg-item">
+							<span class="vg-dot <?php echo ( $wp_cache || $dropin ) ? 'is-ok' : 'is-off'; ?>" aria-hidden="true"></span>
+							<div class="vg-item-main">
+								<strong><?php esc_html_e( 'Page caching in WordPress', 'visigate' ); ?></strong>
+								<span><?php echo esc_html( ( $wp_cache || $dropin ) ? __( 'A page cache is enabled (WP_CACHE / advanced-cache.php).', 'visigate' ) : __( 'No WordPress page-cache drop-in found. Your host or a CDN may still cache pages; run the header test below to check.', 'visigate' ) ); ?></span>
+							</div>
+						</div>
+						<div class="vg-item">
+							<span class="vg-dot is-off" aria-hidden="true"></span>
+							<div class="vg-item-main">
+								<strong><?php echo esc_html( $block ? __( 'Block theme', 'visigate' ) : __( 'Classic theme', 'visigate' ) ); ?></strong>
+								<span>
+									<?php
+									echo esc_html(
+										$block
+											? __( 'Rules run before any output, so Visigate can also send no-cache headers that server and CDN caches understand.', 'visigate' )
+											: __( 'Rules usually run after headers are sent, so server and CDN caches (Varnish, Nginx, Cloudflare) do not receive a no-cache header. Plugin caches still honor the signal.', 'visigate' )
+									);
+									?>
+								</span>
+							</div>
+						</div>
+						<?php if ( ! $caches ) : ?>
+							<div class="vg-item">
+								<span class="vg-dot is-off" aria-hidden="true"></span>
+								<div class="vg-item-main">
+									<strong><?php esc_html_e( 'Cache plugins and hosts', 'visigate' ); ?></strong>
+									<span><?php esc_html_e( 'No known cache plugin or managed host was detected.', 'visigate' ); ?></span>
+								</div>
+							</div>
+						<?php endif; ?>
+						<?php foreach ( $caches as $c ) : ?>
+							<?php $h = $honors[ $c['honors'] ] ?? array( $c['honors'], '', 'is-off' ); ?>
+							<div class="vg-item<?php echo 'headers' === $c['honors'] && ( $sets || $content ) ? ' is-warn' : ''; ?>">
+								<span class="vg-dot <?php echo esc_attr( $h[2] ); ?>" aria-hidden="true"></span>
+								<div class="vg-item-main">
+									<strong><?php echo esc_html( $c['name'] ); ?></strong>
+									<?php if ( '' !== (string) $c['note'] ) : ?>
+										<span><?php echo esc_html( $c['note'] ); ?></span>
+									<?php endif; ?>
+								</div>
+								<span class="vg-badge <?php echo esc_attr( $h[1] ); ?>"><?php echo esc_html( $h[0] ); ?></span>
+							</div>
+						<?php endforeach; ?>
+					</section>
+
+					<section class="vg-card" aria-labelledby="vg-cc-rules">
+						<div class="vg-card-head"><h2 id="vg-cc-rules"><?php esc_html_e( 'Rules a cached page can get wrong', 'visigate' ); ?></h2></div>
+						<?php if ( ! $sets && ! $content ) : ?>
+							<div class="vg-empty"><p><?php esc_html_e( 'None found. No published rule set or page uses visitor-specific conditions.', 'visigate' ); ?></p></div>
+						<?php else : ?>
+							<div class="vg-card-body"><p class="vg-muted"><?php esc_html_e( 'These use conditions that differ between visitors of the same URL. With automatic exclusion on, the pages that run them are not cached by plugins that honor the signal. Check them with the header test if your host or CDN caches pages.', 'visigate' ); ?></p></div>
+							<div class="vg-rows">
+								<?php foreach ( $sets as $row ) : ?>
+									<div class="vg-row vg-grid-cache">
+										<div class="vg-row-name"><div>
+											<a class="vg-row-title" href="<?php echo esc_url( (string) get_edit_post_link( $row['post']->ID ) ); ?>"><?php echo esc_html( $row['post']->post_title ? $row['post']->post_title : '#' . $row['post']->ID ); ?></a>
+											<span class="vg-kind"><?php esc_html_e( 'Rule set', 'visigate' ); ?></span>
+										</div></div>
+										<div class="vg-chips"><?php foreach ( $row['types'] as $t ) : ?><span class="vg-chip is-warn"><?php echo esc_html( $t ); ?></span><?php endforeach; ?></div>
+										<a href="<?php echo esc_url( Visigate_Usage::usage_url( $row['post']->ID ) ); ?>"><?php esc_html_e( 'Where used', 'visigate' ); ?></a>
+									</div>
+								<?php endforeach; ?>
+								<?php foreach ( $content as $row ) : ?>
+									<?php $pto = get_post_type_object( $row['post']->post_type ); ?>
+									<div class="vg-row vg-grid-cache">
+										<div class="vg-row-name"><div>
+											<a class="vg-row-title" href="<?php echo esc_url( (string) get_edit_post_link( $row['post']->ID ) ); ?>"><?php echo esc_html( $row['post']->post_title ? $row['post']->post_title : __( '(no title)', 'visigate' ) ); ?></a>
+											<span class="vg-kind"><?php echo esc_html( $pto ? $pto->labels->singular_name : $row['post']->post_type ); ?></span>
+										</div></div>
+										<div class="vg-chips"><?php foreach ( $row['types'] as $t ) : ?><span class="vg-chip is-warn"><?php echo esc_html( $t ); ?></span><?php endforeach; ?></div>
+										<span>
+											<?php if ( is_post_type_viewable( $row['post']->post_type ) ) : ?>
+												<a href="<?php echo esc_url( (string) get_permalink( $row['post'] ) ); ?>"><?php esc_html_e( 'View', 'visigate' ); ?></a>
+											<?php endif; ?>
+										</span>
+									</div>
+								<?php endforeach; ?>
+							</div>
+						<?php endif; ?>
+					</section>
+
+					<section class="vg-card" id="vg-cache-test" aria-labelledby="vg-cc-test">
+						<div class="vg-card-head"><h2 id="vg-cc-test"><?php esc_html_e( 'Header test', 'visigate' ); ?></h2></div>
+						<div class="vg-card-body">
+							<p class="vg-muted"><?php esc_html_e( 'Loads a page twice as a logged-out visitor and shows the cache headers. A "HIT" on the second load means a cache served a stored copy. If that page uses visitor-specific rules, exclude it from that cache.', 'visigate' ); ?></p>
+							<form class="vg-inline-form" method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+								<?php wp_nonce_field( 'visigate_cache_test' ); ?>
+								<input type="hidden" name="action" value="visigate_cache_test">
+								<label class="vg-sr" for="vg-cache-url"><?php esc_html_e( 'Page address to test', 'visigate' ); ?></label>
+								<input id="vg-cache-url" type="url" name="url" value="<?php echo esc_attr( is_array( $test ) && ! empty( $test['url'] ) ? $test['url'] : home_url( '/' ) ); ?>">
+								<button type="submit" class="vg-btn is-primary"><?php esc_html_e( 'Run test', 'visigate' ); ?></button>
+							</form>
+							<?php
+							if ( is_array( $test ) ) {
+								self::render_test( $test );
+							}
+							?>
+						</div>
+					</section>
+				</div>
+
+				<aside class="vg-col-side">
+					<?php if ( $issues ) : ?>
+						<section class="vg-card is-pad" aria-labelledby="vg-cc-fix">
+							<h2 id="vg-cc-fix"><?php esc_html_e( 'How to fix it', 'visigate' ); ?></h2>
+							<ol class="vg-steps">
+								<?php if ( ! $auto ) : ?>
+									<li><?php printf( /* translators: %s: link to Settings */ esc_html__( 'Turn on Cache safety in %s.', 'visigate' ), '<a href="' . esc_url( $settings ) . '">' . esc_html__( 'Settings', 'visigate' ) . '</a>' ); ?></li>
 								<?php endif; ?>
-							</td>
-						</tr>
-					<?php endforeach; ?>
-					</tbody>
-				</table>
-			<?php endif; ?>
-
-			<h2><?php esc_html_e( 'Header test', 'visigate' ); ?></h2>
-			<p style="max-width:780px"><?php esc_html_e( 'Loads a page twice as a logged-out visitor and shows the cache headers. A "HIT" on the second load means a cache served a stored copy. If that page uses visitor-specific rules, exclude it from that cache.', 'visigate' ); ?></p>
-			<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
-				<?php wp_nonce_field( 'visigate_cache_test' ); ?>
-				<input type="hidden" name="action" value="visigate_cache_test">
-				<input type="url" class="regular-text" name="url" value="<?php echo esc_attr( is_array( $test ) && ! empty( $test['url'] ) ? $test['url'] : home_url( '/' ) ); ?>">
-				<button type="submit" class="button button-primary"><?php esc_html_e( 'Run test', 'visigate' ); ?></button>
-			</form>
-			<?php
-			if ( is_array( $test ) ) {
-				self::render_test( $test );
-			}
-			?>
+								<?php foreach ( $caches as $c ) : ?>
+									<?php if ( 'yes' !== $c['honors'] ) : ?>
+										<li><?php /* translators: %s: cache name */ echo esc_html( sprintf( __( 'In %s, exclude (bypass) the pages listed under “Rules a cached page can get wrong”.', 'visigate' ), $c['name'] ) ); ?></li>
+									<?php endif; ?>
+								<?php endforeach; ?>
+								<li><?php esc_html_e( 'Clear the cache once so stored copies are removed.', 'visigate' ); ?></li>
+								<li><?php esc_html_e( 'Run the header test on one of those pages to confirm.', 'visigate' ); ?></li>
+							</ol>
+						</section>
+					<?php endif; ?>
+					<section class="vg-card is-pad" aria-labelledby="vg-cc-how">
+						<h2 id="vg-cc-how"><?php esc_html_e( 'Why caching matters', 'visigate' ); ?></h2>
+						<p class="vg-muted"><?php esc_html_e( 'Visibility rules run on the server for each visit. A page cache stores one copy of a page and serves it to many visitors, so rules that depend on the visitor can show the wrong content from a cached copy. Login and role rules are usually safe because page caches skip logged-in visitors.', 'visigate' ); ?></p>
+					</section>
+					<section class="vg-card is-pad" aria-labelledby="vg-cc-types">
+						<h2 id="vg-cc-types"><?php esc_html_e( 'Conditions that change per visitor', 'visigate' ); ?></h2>
+						<p class="vg-muted"><?php esc_html_e( 'Pages using these are the ones a cache can get wrong.', 'visigate' ); ?></p>
+						<div class="vg-chips">
+							<?php foreach ( self::dynamic_types() as $label ) : ?>
+								<span class="vg-chip is-warn"><?php echo esc_html( $label ); ?></span>
+							<?php endforeach; ?>
+						</div>
+					</section>
+				</aside>
+			</div>
+			<?php Visigate_Admin_UI::footer(); ?>
 		</div>
 		<?php
 	}
@@ -456,17 +574,17 @@ class Visigate_Cache_Check {
 			return;
 		}
 		$runs = (array) ( $test['runs'] ?? array() );
-		echo '<h3>' . esc_html( (string) $test['url'] ) . '</h3>';
+		echo '<h3 style="margin-top:8px">' . esc_html( (string) $test['url'] ) . '</h3>';
 		$cached = null;
 		foreach ( $runs as $i => $run ) {
 			/* translators: %d: 1 or 2. */
-			echo '<h4>' . esc_html( sprintf( __( 'Load %d', 'visigate' ), $i + 1 ) ) . '</h4>';
+			echo '<h4 style="margin:6px 0 0">' . esc_html( sprintf( __( 'Load %d', 'visigate' ), $i + 1 ) ) . '</h4>';
 			if ( ! empty( $run['error'] ) ) {
-				echo '<p style="color:#b32d2e">' . esc_html( $run['error'] ) . '</p>';
+				echo '<p style="color:#b91c1c">' . esc_html( $run['error'] ) . '</p>';
 				continue;
 			}
-			echo '<table class="widefat striped" style="max-width:900px"><tbody>';
-			echo '<tr><td style="width:280px">' . esc_html__( 'Status', 'visigate' ) . '</td><td>' . (int) $run['code'] . '</td></tr>';
+			echo '<table class="widefat striped"><tbody>';
+			echo '<tr><td style="width:240px">' . esc_html__( 'Status', 'visigate' ) . '</td><td>' . (int) $run['code'] . '</td></tr>';
 			foreach ( (array) $run['headers'] as $h => $v ) {
 				echo '<tr><td><code>' . esc_html( $h ) . '</code></td><td><code>' . esc_html( $v ) . '</code></td></tr>';
 			}
@@ -476,11 +594,11 @@ class Visigate_Cache_Check {
 			}
 		}
 		if ( true === $cached ) {
-			echo '<div class="notice notice-warning inline" style="max-width:860px"><p>' . esc_html__( 'The second load came from a cache. If this page uses visitor-specific rules, every logged-out visitor sees the same copy: exclude the page from that cache (or turn on automatic exclusion and clear the cache).', 'visigate' ) . '</p></div>';
+			echo '<div class="notice notice-warning inline"><p>' . esc_html__( 'The second load came from a cache. If this page uses visitor-specific rules, every logged-out visitor sees the same copy: exclude the page from that cache (or turn on automatic exclusion and clear the cache).', 'visigate' ) . '</p></div>';
 		} elseif ( false === $cached ) {
-			echo '<div class="notice notice-success inline" style="max-width:860px"><p>' . esc_html__( 'The second load was not served from a cache, so rules on this page are evaluated for every visitor.', 'visigate' ) . '</p></div>';
+			echo '<div class="notice notice-success inline"><p>' . esc_html__( 'The second load was not served from a cache, so rules on this page are evaluated for every visitor.', 'visigate' ) . '</p></div>';
 		} else {
-			echo '<div class="notice notice-info inline" style="max-width:860px"><p>' . esc_html__( 'The headers do not say whether a cache was used. Some hosts hide them; check your host\'s cache settings.', 'visigate' ) . '</p></div>';
+			echo '<div class="notice notice-info inline"><p>' . esc_html__( 'The headers do not say whether a cache was used. Some hosts hide them; check your host\'s cache settings.', 'visigate' ) . '</p></div>';
 		}
 	}
 }

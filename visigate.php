@@ -3,7 +3,7 @@
  * Plugin Name:       Visigate – Conditional Content & Visibility Rules
  * Plugin URI:        https://persjay.com/plugins/visigate/
  * Description:       Show or hide any block, Elementor element or menu item by user, role, login status, device, URL parameter, cookie, referrer, page type, category, tag, or time. Visual rule builder, server-side evaluation, zero front-end JavaScript.
- * Version:           1.5.6
+ * Version:           1.6.0
  * Requires at least: 6.2
  * Requires PHP:      7.4
  * Author:            Jaypee Peros
@@ -15,7 +15,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'VISIGATE_VERSION', '1.5.6' );
+define( 'VISIGATE_VERSION', '1.6.0' );
 define( 'VISIGATE_FILE', __FILE__ );
 define( 'VISIGATE_DIR', plugin_dir_path( __FILE__ ) );
 define( 'VISIGATE_URL', plugin_dir_url( __FILE__ ) );
@@ -53,7 +53,9 @@ add_filter(
 		if ( ! in_array( 'visigate_manage', (array) $caps, true ) ) {
 			return $allcaps;
 		}
-		$base                       = (string) apply_filters( 'visigate_base_capability', 'manage_options' );
+		$saved                      = get_option( 'visigate_settings', array() );
+		$default                    = is_array( $saved ) && isset( $saved['manager'] ) && 'edit_others_posts' === $saved['manager'] ? 'edit_others_posts' : 'manage_options';
+		$base                       = (string) apply_filters( 'visigate_base_capability', $default );
 		$allcaps['visigate_manage'] = ! empty( $allcaps[ $base ] ) && (bool) apply_filters( 'visigate_user_can_manage', true, $user );
 		return $allcaps;
 	},
@@ -86,6 +88,8 @@ require_once VISIGATE_DIR . 'includes/class-view-as.php';
 require_once VISIGATE_DIR . 'includes/class-inspector.php';
 require_once VISIGATE_DIR . 'includes/class-warnings.php';
 require_once VISIGATE_DIR . 'includes/class-cache-check.php';
+require_once VISIGATE_DIR . 'includes/class-admin-ui.php';
+require_once VISIGATE_DIR . 'includes/class-admin-rules.php';
 require_once VISIGATE_DIR . 'includes/integrations/elementor.php';
 
 add_action(
@@ -110,5 +114,7 @@ add_action(
 		Visigate_Inspector::init();
 		Visigate_Warnings::init();
 		Visigate_Cache_Check::init();
+		Visigate_Admin_UI::init();
+		Visigate_Admin_Rules::init();
 	}
 );
