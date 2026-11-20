@@ -804,12 +804,12 @@ class Visigate_Inspector {
 			$note = '';
 			if ( ! empty( $e['hidden_parent'] ) ) {
 				/* translators: %s: label of the hidden content that contains this one. */
-				$note = sprintf( __( 'Inside hidden content: %s', 'visigate' ), (string) ( $e['hidden_parent_label'] ?? '' ) );
+				$note = sprintf( __( 'Inside hidden content: %s', 'visigate' ), html_entity_decode( (string) ( $e['hidden_parent_label'] ?? '' ), ENT_QUOTES, 'UTF-8' ) );
 			}
 			$out[] = array(
 				'n'       => (int) $e['n'],
 				'kind'    => (string) $e['kind'],
-				'label'   => (string) $e['label'],
+				'label'   => html_entity_decode( (string) $e['label'], ENT_QUOTES, 'UTF-8' ),
 				'visible' => $e['visible'] && empty( $e['hidden_parent'] ),
 				'sets'    => array_values( array_unique( $sets ) ),
 				'parts'   => $parts,

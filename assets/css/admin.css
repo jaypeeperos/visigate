@@ -523,6 +523,22 @@ body.visigate-screen #poststuff #visigate-fallback .postbox-header { border-bott
 .vgp-pat-use a.vg-chip:hover { background: #e0e3ff; }
 .vgp-pat-foot { margin-top: auto; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 12px; padding-top: 10px; border-top: 1px solid #eef0f6; font-size: 12.5px; }
 .vgp-pat-none { margin: 0 20px 20px; }
+.vg-wrap [hidden], .vg-page [hidden] { display: none !important; }
+
+/* ---------- Network page (Visigate Pro, Agency) ---------- */
+.vgp-grid-net { grid-template-columns: minmax(0, 1.3fr) 110px minmax(0, 2.6fr); min-width: 680px; }
+.vgp-grid-net > .vg-badge { justify-self: start; }
+.vgp-net-sites { display: flex; flex-wrap: wrap; gap: 6px; }
+.vgp-net-site { display: inline-flex; align-items: center; gap: 6px; min-height: 28px; padding: 0 4px 0 10px; border: 1px solid var(--vg-line); border-radius: 999px; background: var(--vg-card); color: var(--vg-text-2) !important; font-size: 12.5px; text-decoration: none; }
+.vgp-net-site:hover { border-color: var(--vg-indigo); color: var(--vg-ink) !important; }
+.vgp-net-site em { font-style: normal; font-size: 11px; color: var(--vg-muted); }
+.vgp-net-site b { min-width: 20px; padding: 0 6px; border-radius: 999px; background: var(--vg-paper); color: var(--vg-muted); font-size: 11.5px; line-height: 20px; text-align: center; }
+.vgp-net-site.is-used b { background: var(--vg-tint); color: var(--vg-indigo-tx); }
+.vgp-net-steps { margin: 0 0 0 18px; display: flex; flex-direction: column; gap: 8px; color: var(--vg-text-2); }
+.vgp-net-steps li { margin: 0; }
+.vgp-net .vg-card-foot .vgp-locked { margin: 0; }
+/* The header and page are siblings here, so their margins collapse: keep the same 14px gap below the ghost card as on site screens. */
+.vg-page.vgp-net { margin-top: 24px; }
 
 /* ---------- Trash views (rule sets and patterns) ---------- */
 .vg-trash-intro { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px; padding: 12px 20px; border-bottom: 1px solid #eef0f6; background: #fafbfd; }

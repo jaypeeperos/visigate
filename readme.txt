@@ -4,7 +4,7 @@ Tags: conditional content, visibility, elementor, block editor, personalization
 Requires at least: 6.2
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.6.0
+Stable tag: 1.6.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -192,6 +192,9 @@ Yes. Visigate Pro is a separate plugin sold outside WordPress.org. This plugin d
 
 == Changelog ==
 
+= 1.6.1 =
+* Improved: styles for the Visigate Pro Network screen (multisite), so it matches the new admin design.
+
 = 1.6.0 =
 * New: redesigned admin. Every Visigate screen shares one header with tabs: Overview, Rule sets, Where used, Cache check, View as and Settings.
 * New: Overview screen with rule set totals, places using rules, cache safety and one-click previews.
@@ -308,6 +311,9 @@ Pro conditions moved to the separate Visigate Pro add-on; unknown conditions now
 Initial release.
 
 == Upgrade Notice ==
+
+= 1.6.1 =
+Styling update for the Visigate Pro Network screen on multisite.
 
 = 1.6.0 =
 Redesigned admin screens: new Overview, Rule sets list with Trash, rule inspector in View as, and a setting for who can manage rules.
